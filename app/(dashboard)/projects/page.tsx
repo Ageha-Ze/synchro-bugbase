@@ -5,8 +5,9 @@ import ProjectProgress from "@/components/ProjectProgress"; // <--- tambah baris
 import { Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import NewProjectModal from "@/components/NewProjectModal";
+import type { Bug, NewBug,RecentBugs } from "@/lib/bugs"; // ✅ Import dari bugs.ts
 import { Button } from "@/components/ui/button";
 import {
   FolderOpen,
@@ -27,7 +28,7 @@ interface Project {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -37,10 +38,47 @@ export default function ProjectsPage() {
   const [sortField, setSortField] = useState<keyof Project>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
+  const [recentBugs, setRecentBugs] = useState<RecentBugs[]>([]);
+
+const fetchRecentBugs = async (): Promise<RecentBugs[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("bugs")
+      .select("*, project_id") // ambil project_id saja
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    if (!data) return [];
+
+    // Fetch project info manual
+    const projectIds = Array.from(new Set(data.map(b => b.project_id)));
+    const { data: projects } = await supabase
+      .from("projects")
+      .select("id, name, description")
+      .in("id", projectIds);
+
+    const mapped: RecentBugs[] = data.map(bug => ({
+      ...bug,
+      project: projects?.find(p => p.id === bug.project_id) ?? null,
+    }));
+
+    return mapped;
+  } catch (err: any) {
+    console.error("Error fetching recent bugs:", err.message || err);
+    return [];
+  }
+};
+
+
+
   useEffect(() => {
     fetchProjects();
+    fetchRecentBugs().then(setRecentBugs);
   }, []);
 
+  
   const fetchProjects = async () => {
     setLoading(true);
     try {

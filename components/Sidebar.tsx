@@ -2,13 +2,13 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { LogOut, LayoutDashboard, FolderKanban } from 'lucide-react'
 import Link from 'next/link'
-import { createBrowserSupabaseClient } from '@/lib/supabaseBrowser'
+import supabaseBrowser from '@/lib/supabaseBrowser'
 import { useState, useEffect } from 'react'
 
 export default function Sidebar() {
   const path = usePathname()
   const router = useRouter()
-  const supabase = createBrowserSupabaseClient()
+  const supabase = supabaseBrowser
   const [loading, setLoading] = useState(false)
 
   const linkClass = (route: string) =>

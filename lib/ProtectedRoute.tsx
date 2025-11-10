@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const router = useRouter();
 
   useEffect(() => {

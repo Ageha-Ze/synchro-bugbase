@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import { Button } from "@/components/ui/button";
 
 interface EditProjectModalProps {
@@ -11,7 +11,7 @@ interface EditProjectModalProps {
 }
 
 export default function EditProjectModal({ project, onClose, onUpdated }: EditProjectModalProps) {
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
   const [loading, setLoading] = useState(false);

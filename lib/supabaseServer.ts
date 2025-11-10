@@ -1,28 +1,15 @@
 // lib/supabaseServer.ts
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import type { Database } from "@/types/supabase";
 
-export function createServerSupabaseClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        getItem: async (key: string) => {
-          try {
-            const c = await cookieStore.get(key); // ✅ tambahkan await
-            return c?.value ?? null;
-          } catch {
-            return null;
-          }
-        },
-        setItem: async (key: string, value: string) => {
-          // implementasi sesuai kebutuhan
-        },
-        removeItem: async (key: string) => {
-          // implementasi sesuai kebutuhan
-        },
-      },
-    }
-  );
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env variables");
 }
+
+// buat Supabase client untuk server-side, pakai service role key
+const supabaseServer: SupabaseClient<Database> = createClient<Database>(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+export default supabaseServer;

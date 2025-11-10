@@ -2,14 +2,14 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {

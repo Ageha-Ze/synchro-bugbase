@@ -1,6 +1,6 @@
-import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import supabaseServer from "@/lib/supabaseServer";
 import ProjectBugsClient from "./ProjectBugsClient";
-import ClientConnectionHandler from '@/components/ClientConnectionHandler';
+import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -12,7 +12,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   console.log("📌 ID type:", typeof id);
   console.log("📌 ID length:", id?.length);
 
-  const supabase = createServerSupabaseClient();
+  const supabase = supabaseServer;
 
   // Debug query
   const { data: project, error: projectError } = await supabase
@@ -54,20 +54,28 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     );
   }
 
-  const { data: bugs = [] } = await supabase
+  // ambil bug list
+  const { data: bugsRaw, error: bugsError } = await supabase
     .from("bugs")
     .select("*")
     .eq("project_id", id)
     .order("created_at", { ascending: false });
 
+  if (bugsError) {
+    console.error("🐞 Error fetching bugs:", bugsError.message);
+  }
+
+  const bugs = bugsRaw ?? []; // fallback supaya tidak null
+
   return (
     <ClientConnectionHandler>
-    <ProjectBugsClient
-      projectId={project.id}
-      projectName={project.name}
-      projectDescription={project.description}
-      initialBugs={bugs}
-    />
+      <ProjectBugsClient
+        projectId={project.id}
+        projectNumber={project.project_number}
+        projectName={project.name ?? "Untitled Project"}
+        projectDescription={project.description ?? ""}
+        initialBugs={bugs}
+      />
     </ClientConnectionHandler>
   );
 }

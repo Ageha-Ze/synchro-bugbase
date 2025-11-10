@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import {
   LineChart,
   Line,
@@ -19,7 +19,7 @@ interface BugTrendData {
 
 export default function BugTrendChart() {
   const [data, setData] = useState<BugTrendData[]>([]);
-  const supabase = createBrowserSupabaseClient(); // ✅ definisikan di sini
+  const supabase = supabaseBrowser; // ✅ definisikan di sini
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,7 +34,8 @@ export default function BugTrendChart() {
       // Group by date
       const grouped: Record<string, number> = {};
       bugs.forEach((bug) => {
-        const date = new Date(bug.created_at).toLocaleDateString("id-ID", {
+        if (!bug.created_at) return;
+          const date = new Date(bug.created_at).toLocaleDateString("id-ID", {
           day: "2-digit",
           month: "short",
         });

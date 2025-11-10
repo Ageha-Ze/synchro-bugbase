@@ -1,13 +1,17 @@
-import { createClient as createBrowserClient } from "@supabase/supabase-js";
+// lib/supabaseBrowser.ts
+"use client"; // penting kalau dipakai di Next.js 13+ app directory
 
-let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
-export function createBrowserSupabaseClient() {
-  if (!supabaseInstance) {
-    supabaseInstance = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-  }
-  return supabaseInstance;
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env variables");
 }
+
+// buat Supabase client untuk browser, pakai anon key
+const supabaseBrowser: SupabaseClient<Database> = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export default supabaseBrowser;

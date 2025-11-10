@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
@@ -12,7 +12,7 @@ interface NewProjectModalProps {
 }
 
 export default function NewProjectModal({ onClose, onNewProject }: NewProjectModalProps) {
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -44,7 +44,7 @@ export default function NewProjectModal({ onClose, onNewProject }: NewProjectMod
         .limit(1)
         .single();
 
-      const newProjectNumber = lastProject ? lastProject.project_number + 1 : 1;
+const newProjectNumber = lastProject ? (lastProject.project_number ?? 0) + 1 : 1;
 
       const { data, error: insertError } = await supabase
         .from("projects")

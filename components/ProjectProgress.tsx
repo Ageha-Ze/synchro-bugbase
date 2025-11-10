@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 
 export default function ProjectProgress({ projectId }: { projectId: string }) {
   const [progress, setProgress] = useState<number | null>(null);
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -14,14 +14,14 @@ export default function ProjectProgress({ projectId }: { projectId: string }) {
         .select("*", { count: "exact", head: true })
         .eq("project_id", projectId);
 
-      const { count: closed } = await supabase
+      const { count: Fixed } = await supabase
         .from("bugs")
         .select("*", { count: "exact", head: true })
         .eq("project_id", projectId)
-        .in("status", ["Confirmed", "Closed"]);
+        .in("status", ["Fixed"]);
 
       if (total && total > 0) {
-        setProgress(Math.round((closed! / total) * 100));
+        setProgress(Math.round((Fixed! / total) * 100));
       } else {
         setProgress(0);
       }

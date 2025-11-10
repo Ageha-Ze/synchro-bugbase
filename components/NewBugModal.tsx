@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
-
+import type { Bug } from "@/lib/bugs"; // ✅ Import dari bugs.ts
 
 interface NewBugModalProps {
   projectId: string;
@@ -13,37 +13,30 @@ interface NewBugModalProps {
   onNewBug: (bug: Bug) => void;
 }
 
-export interface Bug {
-  id: string;
-  project_id: string;
-  bug_number?: number;
-  title: string;
-  description: string;
-  status: "New" | "Open" | "Closed";
-  severity: "Crash/Undoable" | "High" | "Medium" | "Low" | "Suggestion";
-  priority: "Highest" | "High" | "Medium" | "Low";
-  result?: "To Fix in Update" | "Will not fix" | "Not A Bug" | "Fixed" | null;
-  assigned_to?: string | null;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
-  steps_to_reproduce?: string | null;
-  expected_result?: string | null;
-  actual_result?: string | null;
-}
-
 export default function NewBugModal({
   projectId,
   onClose,
   onNewBug,
 }: NewBugModalProps) {
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const [isClosing, setIsClosing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    severity: "Medium" as NonNullable<Bug["severity"]>,
+    priority: "Medium" as NonNullable<Bug["priority"]>,
+    status: "New" as NonNullable<Bug["status"]>,
+    steps_to_reproduce: "",
+    expected_result: "",
+    actual_result: "",
+    link: "",
+  });
 
   const handleClose = () => {
     setIsClosing(true);
@@ -65,14 +58,14 @@ export default function NewBugModal({
     }
 
     if (file.name.length > 50) {
-    setAlertMessage("File name too long. Please use a shorter name.");
-    return;
-  }
+      setAlertMessage("File name too long. Please use a shorter name.");
+      return;
+    }
 
-  if (file.size > 5 * 1024 * 1024) {
-    setAlertMessage("Image file too large (max 5 MB).");
-    return;
-  }
+    if (file.size > 5 * 1024 * 1024) {
+      setAlertMessage("Image file too large (max 5 MB).");
+      return;
+    }
 
     setImageFile(file);
   };
@@ -95,17 +88,6 @@ export default function NewBugModal({
     setVideoFile(file);
   };
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    severity: "Medium" as Bug["severity"],
-    priority: "Medium" as Bug["priority"],
-    status: "New" as Bug["status"],
-    steps_to_reproduce: "",
-    expected_result: "",
-    actual_result: "",
-    link: "",
-  });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -123,10 +105,12 @@ export default function NewBugModal({
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be logged in to create a bug");
 
-      // 1️⃣ Insert bug data
+      // 1️⃣ Dapatkan nomor bug terakhir
       const { data: lastBug } = await supabase
         .from("bugs")
         .select("bug_number")
@@ -144,89 +128,90 @@ export default function NewBugModal({
         description: formData.description.trim(),
         severity: formData.severity,
         priority: formData.priority,
-        status: formData.status,
+        status:formData.status, // ✅ Tidak perlu convert "Closed" lagi
         steps_to_reproduce: formData.steps_to_reproduce.trim() || null,
         expected_result: formData.expected_result.trim() || null,
         actual_result: formData.actual_result.trim() || null,
         created_by: user.id,
       };
 
+      // 2️⃣ Insert bug
       const { data: insertedData, error: insertError } = await supabase
         .from("bugs")
-        .insert(bugData)
+        .insert([bugData])
         .select()
         .single();
 
       if (insertError) throw insertError;
+      if (!insertedData) throw new Error("Failed to create bug");
 
-      // 2️⃣ Upload image safely
-if (imageFile) {
-  const uniqueName = `${insertedData.id}-${Date.now()}-${encodeURIComponent(imageFile.name)}`;
-  const { data: imgUpload, error: imgError } = await supabase.storage
-    .from("bug_attachments")
-    .upload(`images/${uniqueName}`, imageFile, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: imageFile.type || "image/png", // <-- Important
-    });
+      // 3️⃣ Upload gambar (jika ada)
+      if (imageFile) {
+        const uniqueName = `${insertedData.id}-${Date.now()}-${encodeURIComponent(
+          imageFile.name
+        )}`;
+        const { data: imgUpload, error: imgError } = await supabase.storage
+          .from("bug_attachments")
+          .upload(`images/${uniqueName}`, imageFile, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: imageFile.type || "image/png",
+          });
 
-  if (imgError) throw new Error(`Image upload failed: ${imgError.message}`);
+        if (imgError) throw new Error(`Image upload failed: ${imgError.message}`);
 
-  const { data: { publicUrl } } = supabase.storage
-    .from("bug_attachments")
-    .getPublicUrl(imgUpload.path);
+        const { data: imgPublic } = supabase.storage
+          .from("bug_attachments")
+          .getPublicUrl(imgUpload.path);
 
-  await supabase.from("attachments").insert({
-    bug_id: insertedData.id,
-    type: "image",
-    url: publicUrl,
-  });
-}
+        await supabase.from("attachments").insert([
+          {
+            bug_id: insertedData.id,
+            type: "image",
+            url: imgPublic.publicUrl,
+          },
+        ]);
+      }
 
+      // 4️⃣ Upload video (jika ada)
+      if (videoFile) {
+        const safeFileName = videoFile.name.replace(/[^\w.\-]/g, "_");
+        const uniqueName = `${insertedData.id}-${Date.now()}-${safeFileName}`;
 
-// ✅ Video upload fix
-if (videoFile) {
-  const ext = videoFile.name.split(".").pop();
-  const safeFileName = videoFile.name.replace(/[^\w.\-]/g, "_"); // hilangkan spasi & karakter aneh
-  const uniqueName = `${insertedData.id}-${Date.now()}-${safeFileName}`;
+        const { data: vidUpload, error: vidError } = await supabase.storage
+          .from("bug_attachments")
+          .upload(`videos/${uniqueName}`, videoFile, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: videoFile.type || "video/mp4",
+          });
 
-  const { data: vidUpload, error: vidError } = await supabase.storage
-    .from("bug_attachments")
-    .upload(`videos/${uniqueName}`, videoFile, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: videoFile.type || "video/mp4",
-    });
+        if (vidError) throw new Error(`Video upload failed: ${vidError.message}`);
 
+        const { data: vidPublic } = supabase.storage
+          .from("bug_attachments")
+          .getPublicUrl(`videos/${uniqueName}`);
 
-  if (vidError) throw new Error(`Video upload failed: ${vidError.message}`);
+        await supabase.from("attachments").insert([
+          {
+            bug_id: insertedData.id,
+            type: "video",
+            url: vidPublic.publicUrl,
+          },
+        ]);
+      }
 
-  const { data: publicData } = supabase.storage
-    .from("bug_attachments")
-    .getPublicUrl(`videos/${uniqueName}`);
-
-  await supabase.from("attachments").insert({
-    bug_id: insertedData.id,
-    type: "video",
-    url: publicData.publicUrl,
-  });
-}
-
-      // 4️⃣ Keep link-type attachment unchanged
+      // 5️⃣ Link eksternal
       if (formData.link.trim()) {
-        const type =
-          formData.link.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-            ? "image"
-            : formData.link.match(/\.(mp4|mov|avi|mkv)$/i)
-            ? "video"
-            : "link";
+        const type = formData.link.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+          ? "image"
+          : formData.link.match(/\.(mp4|mov|avi|mkv)$/i)
+          ? "video"
+          : "link";
 
-        const { error: attachError } = await supabase.from("attachments").insert([
+        await supabase.from("attachments").insert([
           { bug_id: insertedData.id, type, url: formData.link.trim() },
         ]);
-
-        if (attachError)
-          console.warn("⚠️ Attachment insert failed:", attachError.message);
       }
 
       onNewBug(insertedData as Bug);
@@ -239,8 +224,8 @@ if (videoFile) {
       setImageFile(null);
       setVideoFile(null);
     }
-  };
-
+  };  
+  
   return (
     <ClientConnectionHandler>
     <div

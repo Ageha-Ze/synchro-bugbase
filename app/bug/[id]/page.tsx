@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import supabaseServer from "@/lib/supabaseServer";
 import BugDetailClient from "./BugDetailClient";
 import { AlertCircle, XCircle } from "lucide-react";
 import ClientConnectionHandler from '@/components/ClientConnectionHandler';
@@ -12,7 +12,7 @@ export default async function BugDetailPage({ params }: BugDetailPageProps) {
 
   console.log("🐛 Bug Detail Page - bugId:", id);
 
-  const supabase = createServerSupabaseClient();
+  const supabase = supabaseServer;
 
   try {
     // Fetch bug with attachments
@@ -76,8 +76,8 @@ export default async function BugDetailPage({ params }: BugDetailPageProps) {
     return (
       <BugDetailClient
         bug={bug}
-        initialComments={comments}
-        projectId={bug.project_id}
+        initialComments={comments ?? []} // fallback to empty array
+  projectId={bug.project_id ?? ""}
       />
     );
   } catch (err: any) {

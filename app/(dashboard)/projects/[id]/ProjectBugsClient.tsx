@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import NewBugModal from "@/components/NewBugModal";
 import { useToast } from "@/components/ui/use-toast";
+import type { Bug, NewBug } from "@/lib/bugs"; // ✅ Import dari bugs.ts
 import {
   Search,
   ChevronDown,
@@ -17,37 +18,26 @@ import {
   Loader2,
   Bug as BugIcon,
 } from "lucide-react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
-
-interface Bug {
-  project_number?: number;
-  id: string;
-  bug_number?: number;
-  title: string;
-  description: string;
-  severity: string;
-  priority: string;
-  status: string;
-  result?: string;
-  created_at: string;
-}
 
 interface ProjectBugsClientProps {
   projectId: string;
   projectName: string;
   projectDescription: string;
   initialBugs?: Bug[];
+  projectNumber: number | null; // ✅ Allow null
 }
 
 export default function ProjectBugsClient({
   projectId,
   projectName,
   projectDescription,
+  projectNumber,
   initialBugs = [],
 }: ProjectBugsClientProps) {
   const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const { toast } = useToast();
 
   const [bugs, setBugs] = useState<Bug[]>(initialBugs);
@@ -61,88 +51,93 @@ export default function ProjectBugsClient({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-
   useEffect(() => {
     filterAndSortBugs();
   }, [bugs, searchQuery, filterSeverity, filterStatus, sortField, sortDirection]);
 
   const filterAndSortBugs = () => {
-  let result = [...bugs];
+    let result = [...bugs];
 
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase().trim();
-    result = result.filter((bug) => {
-      const bugId = `${bug.project_number || 1}-${String(bug.bug_number || 0).padStart(3, "0")}`.toLowerCase();
-      return (
-        bug.title.toLowerCase().includes(q) ||
-        bug.description.toLowerCase().includes(q) ||
-        bug.status.toLowerCase().includes(q) ||
-        bug.result?.toLowerCase().includes(q) ||
-        bugId.includes(q)
-      );
-    });
-  }
-
-  if (filterSeverity !== "all")
-    result = result.filter((b) => b.severity === filterSeverity);
-  if (filterStatus !== "all")
-    result = result.filter((b) => b.status === filterStatus);
-
-  result.sort((a, b) => {
-    let aVal = a[sortField];
-    let bVal = b[sortField];
-
-    if (sortField === "created_at") {
-      aVal = new Date(aVal).getTime();
-      bVal = new Date(bVal).getTime();
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((bug) => {
+        const bugId = `${bug.project_id}-${String(bug.bug_number).padStart(3, "0")}`.toLowerCase();
+        return (
+          bug.title?.toLowerCase().includes(q) ||
+          bug.description?.toLowerCase().includes(q) ||
+          bug.status?.toLowerCase().includes(q) ||
+          bug.result?.toLowerCase().includes(q) ||
+          bugId.includes(q)
+        );
+      });
     }
 
-    if (typeof aVal === "string") aVal = aVal.toLowerCase();
-    if (typeof bVal === "string") bVal = bVal.toLowerCase();
+    if (filterSeverity !== "all") result = result.filter((b) => b.severity === filterSeverity);
+    if (filterStatus !== "all") result = result.filter((b) => b.status === filterStatus);
 
-    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
+    result.sort((a, b) => {
+      let aVal: string | number = a[sortField] ?? "";
+      let bVal: string | number = b[sortField] ?? "";
 
-  setFilteredBugs(result);
-};
+      if (sortField === "created_at") {
+        aVal = aVal ? new Date(aVal as string).getTime() : 0;
+        bVal = bVal ? new Date(bVal as string).getTime() : 0;
+      }
 
- // Tambahkan di dalam komponen, sebelum return:
-const formatBugId = (bug: Bug) => {
-  const projectNum = bug.project_number ?? "01"; // default kalau NULL
-  const bugNum = String(bug.bug_number ?? 0).padStart(3, "0"); // default kalau NULL
-  return `SCB-${projectNum}-${bugNum}`;
-};
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
 
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    setFilteredBugs(result);
+  };
+
+  const formatBugId = (bug: Bug) => {
+    const projectNum = String(projectNumber ?? 1).padStart(2, "0"); // fallback ke 1
+    const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
+    return `SCB-${projectNum}-${bugNum}`;
+  };
+  
   const handleSort = (field: keyof Bug) => {
-    if (sortField === field)
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    if (sortField === field) setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     else {
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  const handleImportBugs = async (data: any[]) => {
-  try {
-    const { error } = await supabase.from("bugs").insert(data)
-    if (error) throw error
+  const handleImportBugs = async (data: NewBug[]) => {
+    try {
+      const formattedData = data.map((bug) => ({
+        ...bug,
+        project_id: bug.project_id ?? projectId,
+      }));
 
-    setBugs([...data, ...bugs])
-    toast({ title: "✅ Bugs imported successfully!" })
-  } catch (err) {
-    console.error(err)
-    toast({ title: "❌ Import failed", description: "Check your file format." })
-  }
-}
+      const { data: insertedBugs, error } = await supabase
+        .from("bugs")
+        .insert(formattedData)
+        .select();
+
+      if (error) throw error;
+      if (!insertedBugs) throw new Error("No bugs inserted");
+
+      setBugs([...insertedBugs, ...bugs]);
+      toast({ title: "✅ Bugs imported successfully!" });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "❌ Import failed", description: err.message });
+    }
+  };
+
   const handleNewBug = (newBug: Bug) => {
     setBugs([newBug, ...bugs]);
     setShowModal(false);
     toast({
       title: "New Bug Added 🎉",
-      description:
-        "Your new bug has been successfully created and is visible in the list.",
+      description: "Your new bug has been successfully created and is visible in the list.",
     });
   };
 
@@ -164,6 +159,7 @@ const formatBugId = (bug: Bug) => {
     }
   };
 
+
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
       "Crash/Undoable": "from-red-100 to-red-200 text-red-800 border-red-300",
@@ -174,7 +170,8 @@ const formatBugId = (bug: Bug) => {
     };
     return colors[severity] || "from-gray-100 to-gray-200 text-gray-800 border-gray-300";
   };
-const getPriorityColor = (status: string) => {
+
+  const getPriorityColor = (status: string) => {
     const colors: Record<string, string> = {
       Low: "from-green-100 to-green-200 text-green-800 border-green-300",
       High: "from-orange-100 to-orange-200 text-orange-800 border-orange-300",
@@ -183,6 +180,7 @@ const getPriorityColor = (status: string) => {
     };
     return colors[status] || "from-gray-100 to-gray-200 text-gray-700 border-gray-300";
   };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       New: "from-red-100 to-red-200 text-red-800 border-red-300",
@@ -196,16 +194,15 @@ const getPriorityColor = (status: string) => {
     return colors[status] || "from-gray-100 to-gray-200 text-gray-700 border-gray-300";
   };
 
-
   const getResultColor = (result: string) => {
-  const colors: Record<string, string> = {
-    Confirmed: "from-green-100 to-green-200 text-green-800 border-green-300",
-    Closed: "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border-gray-300",
-    Unresolved: "from-red-100 to-red-200 text-red-800 border-red-300",
-    "To-Do": "bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 border-indigo-300",
+    const colors: Record<string, string> = {
+      Confirmed: "from-green-100 to-green-200 text-green-800 border-green-300",
+      Closed: "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border-gray-300",
+      Unresolved: "from-red-100 to-red-200 text-red-800 border-red-300",
+      "To-Do": "bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 border-indigo-300",
+    };
+    return colors[result] || "from-gray-100 to-gray-200 text-gray-700 border-gray-300";
   };
-  return colors[result] || "from-gray-100 to-gray-200 text-gray-700 border-gray-300";
-};
 
   const SortIcon = ({ field }: { field: keyof Bug }) => {
     if (sortField !== field)
@@ -469,13 +466,13 @@ const getPriorityColor = (status: string) => {
         </td>
 
         {/* Created Date */}
-        <td className="px-6 py-5 text-sm text-slate-600">
-          {new Date(bug.created_at).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </td>
+<td className="px-6 py-5 text-sm text-slate-600">
+  {bug.created_at ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }) : "-"}
+</td>
 
         {/* Actions */}
         <td className="px-6 py-5 text-right">
@@ -518,7 +515,7 @@ const getPriorityColor = (status: string) => {
   <ImportBugModal
     projectId={projectId}
     onClose={() => setShowImportModal(false)}
-    onImport={(newBugs) => setBugs((prev) => [...newBugs, ...prev])}
+    onImport={handleImportBugs} // <-- pakai fungsi ini
   />
 )}
 
