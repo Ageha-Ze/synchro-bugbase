@@ -1,42 +1,60 @@
-'use client';
+"use client";
 
-import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, LayoutDashboard, FolderKanban } from 'lucide-react';
-import Link from 'next/link';
-import supabaseBrowser from '@/lib/supabaseBrowser';
-import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from "next/navigation";
+import { LogOut, LayoutDashboard, FolderKanban } from "lucide-react";
+import Link from "next/link";
+import supabaseBrowser from "@/lib/supabaseBrowser";
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Sidebar() {
   const path = usePathname();
   const router = useRouter();
   const supabase = supabaseBrowser;
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const linkClass = (route: string) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 cursor-pointer
     ${
       path === route
-        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm scale-[1.02]'
-        : 'text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600'
+        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm scale-[1.02]"
+        : "text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600"
     }`;
 
   const handleLogout = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signOut();
     setLoading(false);
-    if (error) return alert(error.message);
-    router.push('/login');
+
+    if (error) {
+      toast({
+        title: "Logout Gagal",
+        description: error.message,
+        type: "error",
+      });
+      return;
+    }
+
+    toast({
+      title: "Berhasil Logout",
+      description: "Kamu telah keluar dari akun.",
+      type: "success",
+    });
+
+    // Tunggu sebentar biar toast sempat muncul
+    setTimeout(() => {
+      router.push("/login");
+    }, 1000);
   };
 
   useEffect(() => {
-    router.prefetch('/dashboard');
-    router.prefetch('/projects');
+    router.prefetch("/dashboard");
+    router.prefetch("/projects");
   }, [router]);
 
   return (
-  <>
-    {/* === Desktop Sidebar === */}
-    <aside className="hidden md:flex flex-col h-screen w-64 bg-white border-r border-indigo-100 shadow-sm">
+    <aside className="h-screen w-64 flex flex-col bg-white border-r border-indigo-100 shadow-sm overflow-hidden md:static md:w-64">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-indigo-100 bg-gradient-to-r from-indigo-500 to-red-400">
         <div className="relative">
@@ -51,51 +69,68 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 flex flex-col p-4 space-y-2 overflow-y-auto">
-        <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
-          <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-          <span className="ml-1.5 truncate">Dashboard</span>
-        </Link>
+      <nav className="flex-1 flex flex-col p-4 space-y-2 overflow-y-auto md:space-y-3">
+        <div className="flex flex-col space-y-2">
+          <Link href="/dashboard" className={`${linkClass("/dashboard")} group`}>
+            <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+            <span className="ml-1.5 truncate">Dashboard</span>
+          </Link>
 
-        <Link href="/projects" className={`${linkClass('/projects')} group`}>
-          <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-          <span className="ml-1.5 truncate">Projects</span>
-        </Link>
+          <Link href="/projects" className={`${linkClass("/projects")} group`}>
+            <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+            <span className="ml-1.5 truncate">Projects</span>
+          </Link>
+        </div>
 
+        {/* Logout */}
         <button
           onClick={handleLogout}
           disabled={loading}
           className="flex items-center gap-2 text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-4 rounded-lg transition-all duration-300 w-full mt-auto"
         >
           <LogOut className="w-5 h-5" />
-          {loading ? 'Logging out...' : 'Logout'}
+          {loading ? "Logging out..." : "Logout"}
         </button>
       </nav>
+
+      {/* Responsif Mobile */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          aside {
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+            top: auto;
+            flex-direction: row;
+            justify-content: flex-end;
+            border-top: 1px solid #e5e7eb;
+            border-right: none;
+            background: white;
+            z-index: 50;
+            padding: 0 1rem;
+            height: auto;
+          }
+
+          nav {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            overflow-x: auto;
+            flex: 1;
+          }
+
+          nav a,
+          nav button {
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            padding: 0.5rem 0.75rem;
+          }
+        }
+      `}</style>
     </aside>
-
-    {/* === Mobile Bottom Bar === */}
-    <aside className="fixed md:hidden bottom-0 left-0 right-0 bg-white border-t border-indigo-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 h-16 flex justify-around items-center px-3">
-      <Link href="/dashboard" className="flex flex-col items-center text-gray-700 hover:text-indigo-600">
-        <LayoutDashboard className="w-6 h-6" />
-        <span className="text-[11px] mt-0.5">Dashboard</span>
-      </Link>
-
-      <Link href="/projects" className="flex flex-col items-center text-gray-700 hover:text-indigo-600">
-        <FolderKanban className="w-6 h-6" />
-        <span className="text-[11px] mt-0.5">Projects</span>
-      </Link>
-
-      <button
-        onClick={handleLogout}
-        disabled={loading}
-        className="flex flex-col items-center text-red-600 hover:text-rose-600"
-      >
-        <LogOut className="w-6 h-6" />
-        <span className="text-[11px] mt-0.5">
-          {loading ? '...' : 'Logout'}
-        </span>
-      </button>
-    </aside>
-  </>
-);
+  );
 }
