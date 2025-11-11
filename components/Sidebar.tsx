@@ -34,7 +34,9 @@ export default function Sidebar() {
   }, [router]);
 
   return (
-    <aside className="h-screen w-64 flex flex-col bg-white border-r border-indigo-100 shadow-sm overflow-hidden">
+  <>
+    {/* === Desktop Sidebar === */}
+    <aside className="hidden md:flex flex-col h-screen w-64 bg-white border-r border-indigo-100 shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-indigo-100 bg-gradient-to-r from-indigo-500 to-red-400">
         <div className="relative">
@@ -48,21 +50,18 @@ export default function Sidebar() {
         <span className="font-extrabold text-lg text-white tracking-tight">Synchro BugBase</span>
       </div>
 
-      {/* Navigation Links */}
+      {/* Navigation */}
       <nav className="flex-1 flex flex-col p-4 space-y-2 overflow-y-auto">
-        <div className="flex flex-col space-y-2">
-          <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
-            <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-            <span className="ml-1.5 truncate">Dashboard</span>
-          </Link>
+        <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
+          <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+          <span className="ml-1.5 truncate">Dashboard</span>
+        </Link>
 
-          <Link href="/projects" className={`${linkClass('/projects')} group`}>
-            <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-            <span className="ml-1.5 truncate">Projects</span>
-          </Link>
-        </div>
+        <Link href="/projects" className={`${linkClass('/projects')} group`}>
+          <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+          <span className="ml-1.5 truncate">Projects</span>
+        </Link>
 
-        {/* Logout button selalu di bawah */}
         <button
           onClick={handleLogout}
           disabled={loading}
@@ -72,99 +71,31 @@ export default function Sidebar() {
           {loading ? 'Logging out...' : 'Logout'}
         </button>
       </nav>
-
-      <style jsx>{`
-        aside {
-    animation: fadeInSidebar 0.4s ease-in-out;
-  }
-  @keyframes fadeInSidebar {
-    from {
-      opacity: 0;
-      transform: translateX(-16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  /* === DESKTOP === */
-  @media (min-width: 769px) {
-    aside {
-      position: relative;
-      height: 100vh;
-      width: 16rem;
-      display: flex;
-      flex-direction: column;
-      background: white;
-      border-right: 1px solid #e0e7ff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-    }
-  }
-
-  /* === MOBILE === */
-  @media (max-width: 768px) {
-    aside {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
-      width: 100%;
-      background: white;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 50;
-      padding: 0 0.5rem;
-    }
-
-    /* sembunyikan header di mobile */
-    aside > div:first-child {
-      display: none;
-    }
-
-    nav {
-      flex: 1;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-around;
-      align-items: center;
-      overflow-x: auto;
-      gap: 0.5rem;
-      padding: 0;
-    }
-
-    nav a,
-    nav button {
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      padding: 0.25rem;
-      border-radius: 8px;
-      background: transparent;
-    }
-
-    nav a span,
-    nav button span {
-      display: none; /* sembunyikan text di mobile */
-    }
-
-    nav svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    /* ikon logout di kanan */
-    nav button {
-      color: #ef4444;
-    }
-  }
-      `}</style>
     </aside>
-  );
+
+    {/* === Mobile Bottom Bar === */}
+    <aside className="fixed md:hidden bottom-0 left-0 right-0 bg-white border-t border-indigo-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 h-16 flex justify-around items-center px-3">
+      <Link href="/dashboard" className="flex flex-col items-center text-gray-700 hover:text-indigo-600">
+        <LayoutDashboard className="w-6 h-6" />
+        <span className="text-[11px] mt-0.5">Dashboard</span>
+      </Link>
+
+      <Link href="/projects" className="flex flex-col items-center text-gray-700 hover:text-indigo-600">
+        <FolderKanban className="w-6 h-6" />
+        <span className="text-[11px] mt-0.5">Projects</span>
+      </Link>
+
+      <button
+        onClick={handleLogout}
+        disabled={loading}
+        className="flex flex-col items-center text-red-600 hover:text-rose-600"
+      >
+        <LogOut className="w-6 h-6" />
+        <span className="text-[11px] mt-0.5">
+          {loading ? '...' : 'Logout'}
+        </span>
+      </button>
+    </aside>
+  </>
+);
 }
