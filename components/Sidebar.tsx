@@ -86,39 +86,34 @@ export default function Sidebar() {
       }
     }
 
-    @media (max-width: 768px) {
+  @media (max-width: 768px) {
   aside {
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
-    right: 0;
-    top: auto;
-    height: auto; /* ← Tambahkan ini */
-    flex-direction: row;
-    justify-content: space-around; /* lebih rapi */
-    border-top: 1px solid #e5e7eb;
-    border-right: none;
+    right: auto;
+    bottom: 0;
+    height: 100vh;
+    flex-direction: column;
+    border-right: 1px solid #e5e7eb;
+    border-top: none;
     background: white;
     z-index: 50;
     padding: 0.5rem 0;
   }
 
   nav {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0;
-    overflow-x: auto;
-    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
   nav a,
   nav button {
-    white-space: nowrap;
-    flex-shrink: 0;
-    font-size: 0.8rem;
-    padding: 0.5rem;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
   }
 }
   `}</style>
