@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100 overflow-hidden">
+      <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
         {/* Sidebar */}
         <aside
           className={`fixed top-0 left-0 h-full w-56 bg-white/85 dark:bg-neutral-900/85 backdrop-blur-xl border-r border-gray-200 dark:border-neutral-800 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out
@@ -61,12 +61,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
         )}
 
-        {/* Main section */}
-        <div className="flex-1 flex flex-col md:ml-56 transition-all duration-300">
+        {/* Main area */}
+        <div className="flex-1 flex flex-col md:ml-56 transition-all duration-300 overflow-hidden">
           {/* Topbar */}
           <header className="h-16 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border-b border-gray-200 dark:border-neutral-800 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-sm">
             <div className="flex items-center gap-3">
-              {/* Hamburger (mobile) */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 md:hidden transition-all"
@@ -82,14 +81,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Page content */}
-          <main
-            className="flex-1 p-4 sm:p-6 overflow-y-auto transform transition-transform duration-300 ease-in-out"
-            style={{
-              transform: 'scale(0.98)', // “zoom out” sedikit biar konten fit
-              transformOrigin: 'top center',
-            }}
-          >
-            <div className="max-w-[100vw] overflow-x-hidden">
+          <main className="flex-1 w-full max-w-full overflow-auto px-4 sm:px-6 py-4">
+            <div className="w-full h-full max-w-screen-2xl mx-auto">
               {children}
             </div>
           </main>
