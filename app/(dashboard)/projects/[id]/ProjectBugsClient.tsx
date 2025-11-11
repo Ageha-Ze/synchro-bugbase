@@ -293,11 +293,11 @@ export default function ProjectBugsClient({
           </div>
         </div>
 
-        {/* Search & Filter */}
-<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 p-4 md:p-6">
-  <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+        {/* Search & Filter responsive */}
+<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 p-4 md:p-6 overflow-x-auto">
+  <div className="flex flex-col md:flex-row gap-3 md:gap-4 flex-wrap">
     {/* Search */}
-    <div className="flex-1 relative">
+    <div className="flex-1 relative min-w-[200px]">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
       <input
         type="text"
@@ -309,7 +309,7 @@ export default function ProjectBugsClient({
     </div>
 
     {/* Filters */}
-    <div className="flex flex-wrap md:flex-nowrap gap-3">
+    <div className="flex gap-3 flex-wrap md:flex-nowrap min-w-[180px]">
       <select
         value={filterSeverity}
         onChange={(e) => setFilterSeverity(e.target.value)}
@@ -342,40 +342,40 @@ export default function ProjectBugsClient({
 </div>
 
 
-        {/* Table */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 overflow-x-auto">
-          <table className="w-full text-sm md:text-base">
-          <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white border-b border-indigo-200 backdrop-blur-md">
-              <tr>
-                {[
-                  "Bug ID",
-                  "Severity",
-                  "Title & Location",
-                  "Priority",
-                  "Status",
-                  "Result",
-                  "Created",
-                  "Actions",
-                ].map((label, i) => (
-                  <th
-                    key={i}
-                className="px-4 md:px-6 py-3 text-left font-semibold text-indigo-800 uppercase text-xs md:text-sm tracking-wide"
-                  >
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+        {/* Table responsive */}
+<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 overflow-x-auto">
+  <table className="w-full text-sm md:text-base min-w-[700px]">
+    <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white border-b border-indigo-200 backdrop-blur-md">
+      <tr>
+        {[
+          "Bug ID",
+          "Severity",
+          "Title & Location",
+          "Priority",
+          "Status",
+          "Result",
+          "Created",
+          "Actions",
+        ].map((label, i) => (
+          <th
+            key={i}
+            className="px-4 md:px-6 py-3 text-left font-semibold text-indigo-800 uppercase text-xs md:text-sm tracking-wide"
+          >
+            {label}
+          </th>
+        ))}
+      </tr>
+    </thead>
 
             <tbody className="divide-y divide-indigo-100">
               {filteredBugs.length > 0 ? (
-                filteredBugs.map((bug, index) => (
-                  <tr
-                    key={bug.id}
-                    onClick={() => router.push(`/bug/${bug.id}`)}
-                  className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
-                    style={{ animationDelay: `${index * 0.03}s` }}
-                  >
+        filteredBugs.map((bug, index) => (
+          <tr
+            key={bug.id}
+            onClick={() => router.push(`/bug/${bug.id}`)}
+            className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
+            style={{ animationDelay: `${index * 0.03}s` }}
+          >
                     <td className="px-4 md:px-6 py-4 font-mono text-gray-900 font-bold">
                       {formatBugId(bug)}
                     </td>
@@ -498,22 +498,22 @@ export default function ProjectBugsClient({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
-                    <div className="text-gray-400">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
-                        <BugIcon className="w-8 h-8 text-indigo-600" />
-                      </div>
-                      <p className="text-lg font-bold text-gray-900">
-                        No bugs found
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Try adjusting your search or filters
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
+          <td colSpan={8} className="px-4 py-16 text-center">
+            <div className="text-gray-400">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
+                <BugIcon className="w-8 h-8 text-indigo-600" />
+              </div>
+              <p className="text-lg font-bold text-gray-900">
+                No bugs found
+              </p>
+              <p className="text-sm text-gray-500">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          </td>
+        </tr>
+      )}
+    </tbody>
           </table>
         </div>
 
