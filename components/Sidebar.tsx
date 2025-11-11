@@ -75,53 +75,95 @@ export default function Sidebar() {
 
       <style jsx>{`
         aside {
-          animation: fadeInSidebar 0.4s ease-in-out;
-        }
-        @keyframes fadeInSidebar {
-          from {
-            opacity: 0;
-            transform: translateX(-16px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
+    animation: fadeInSidebar 0.4s ease-in-out;
+  }
+  @keyframes fadeInSidebar {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 
-        @media (max-width: 768px) {
-          aside {
-            position: fixed;
-            width: 100%;
-            bottom: 0;
-            top: auto;
-            flex-direction: row;
-            justify-content: flex-end;
-            border-top: 1px solid #e5e7eb;
-            border-right: none;
-            background: white;
-            z-index: 50;
-            padding: 0 1rem;
-          }
+  /* === DESKTOP === */
+  @media (min-width: 769px) {
+    aside {
+      position: relative;
+      height: 100vh;
+      width: 16rem;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-right: 1px solid #e0e7ff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+  }
 
-          nav {
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0;
-            overflow-x: auto;
-            flex: 1;
-          }
+  /* === MOBILE === */
+  @media (max-width: 768px) {
+    aside {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      width: 100%;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+      padding: 0 0.5rem;
+    }
 
-          nav a,
-          nav button {
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-size: 0.75rem;
-            padding: 0.5rem 0.75rem;
-          }
-        }
+    /* sembunyikan header di mobile */
+    aside > div:first-child {
+      display: none;
+    }
+
+    nav {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      overflow-x: auto;
+      gap: 0.5rem;
+      padding: 0;
+    }
+
+    nav a,
+    nav button {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      padding: 0.25rem;
+      border-radius: 8px;
+      background: transparent;
+    }
+
+    nav a span,
+    nav button span {
+      display: none; /* sembunyikan text di mobile */
+    }
+
+    nav svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* ikon logout di kanan */
+    nav button {
+      color: #ef4444;
+    }
+  }
       `}</style>
     </aside>
   );
