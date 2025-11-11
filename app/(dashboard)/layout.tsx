@@ -46,14 +46,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100 overflow-hidden">
         {/* Sidebar */}
         <aside
-          className={`fixed top-0 left-0 h-full w-64 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-r border-gray-200 dark:border-neutral-800 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out
+          className={`fixed top-0 left-0 h-full w-56 bg-white/85 dark:bg-neutral-900/85 backdrop-blur-xl border-r border-gray-200 dark:border-neutral-800 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0`}
         >
           <Sidebar />
         </aside>
 
-        {/* Overlay for mobile */}
+        {/* Overlay (mobile) */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-[1px] md:hidden z-30 transition-opacity duration-300"
@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
 
         {/* Main section */}
-        <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
+        <div className="flex-1 flex flex-col md:ml-56 transition-all duration-300">
           {/* Topbar */}
           <header className="h-16 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border-b border-gray-200 dark:border-neutral-800 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-sm">
             <div className="flex items-center gap-3">
@@ -82,7 +82,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Page content */}
-          <main className="flex-1 p-4 sm:p-6 overflow-y-auto">{children}</main>
+          <main
+            className="flex-1 p-4 sm:p-6 overflow-y-auto transform transition-transform duration-300 ease-in-out"
+            style={{
+              transform: 'scale(0.98)', // “zoom out” sedikit biar konten fit
+              transformOrigin: 'top center',
+            }}
+          >
+            <div className="max-w-[100vw] overflow-x-hidden">
+              {children}
+            </div>
+          </main>
 
           {/* Footer */}
           <footer className="h-12 border-t border-gray-200 dark:border-neutral-800 flex items-center justify-center text-sm text-gray-500 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md">
