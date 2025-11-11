@@ -3,7 +3,7 @@
 import ProtectedRoute from '@/lib/ProtectedRoute';
 import Sidebar from '@/components/Sidebar';
 import { useEffect, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 function DynamicGreeting() {
   const [timeData, setTimeData] = useState({ greeting: '', date: '' });
@@ -43,35 +43,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
+      <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-gray-100 overflow-hidden">
         {/* Sidebar */}
         <aside
-          className={`fixed top-0 left-0 h-screen w-64 transform bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-r border-gray-200 dark:border-neutral-800 shadow-xl transition-transform duration-300 z-40
+          className={`fixed top-0 left-0 h-full w-64 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-r border-gray-200 dark:border-neutral-800 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0`}
         >
           <Sidebar />
         </aside>
 
-        {/* Overlay (mobile only) */}
+        {/* Overlay for mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 md:hidden"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[1px] md:hidden z-30 transition-opacity duration-300"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Main content */}
+        {/* Main section */}
         <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
           {/* Topbar */}
-          <header className="h-16 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border-b border-gray-200 dark:border-neutral-800 flex items-center justify-between px-4 sm:px-6 shadow-sm sticky top-0 z-20 transition-all duration-500">
+          <header className="h-16 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border-b border-gray-200 dark:border-neutral-800 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-sm">
             <div className="flex items-center gap-3">
-              {/* Hamburger (mobile only) */}
+              {/* Hamburger (mobile) */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 md:hidden"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 md:hidden transition-all"
               >
-                <Menu className="w-6 h-6" />
+                {sidebarOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
               <DynamicGreeting />
             </div>
@@ -81,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main className="flex-1 p-4 sm:p-6 overflow-y-auto">{children}</main>
 
           {/* Footer */}
-          <footer className="h-12 border-t flex items-center justify-center text-sm text-gray-500 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md">
+          <footer className="h-12 border-t border-gray-200 dark:border-neutral-800 flex items-center justify-center text-sm text-gray-500 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md">
             © {new Date().getFullYear()} Synchron Testing · All rights reserved
           </footer>
         </div>
