@@ -87,38 +87,40 @@ export default function Sidebar() {
     }
 
     @media (max-width: 768px) {
-      aside {
-        position: fixed;
-        width: 100%;
-        bottom: 0;
-        top: auto;
-        flex-direction: row;
-        justify-content: flex-end;
-        border-top: 1px solid #e5e7eb;
-        border-right: none;
-        background: white;
-        z-index: 50;
-        padding: 0 1rem;
-      }
+  aside {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: auto; /* ← Tambahkan ini */
+    flex-direction: row;
+    justify-content: space-around; /* lebih rapi */
+    border-top: 1px solid #e5e7eb;
+    border-right: none;
+    background: white;
+    z-index: 50;
+    padding: 0.5rem 0;
+  }
 
-      nav {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-        overflow-x: auto;
-        flex: 1;
-      }
+  nav {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0;
+    overflow-x: auto;
+    flex: 1;
+  }
 
-      nav a,
-      nav button {
-        white-space: nowrap;
-        flex-shrink: 0;
-        font-size: 0.75rem;
-      }
-    }
+  nav a,
+  nav button {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+}
   `}</style>
     </aside>
   );
