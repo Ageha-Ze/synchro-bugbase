@@ -87,32 +87,6 @@ export default function Sidebar() {
             transform: translateX(0);
           }
         }
-
-        @media (max-width: 768px) {
-          aside {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: auto;
-            bottom: 0;
-            height: 100vh;
-            z-index: 50;
-          }
-
-          nav {
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: stretch;
-            gap: 0.5rem;
-            padding: 0.5rem;
-          }
-
-          nav a,
-          nav button {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-          }
-        }
       `}</style>
     </aside>
   );
