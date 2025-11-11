@@ -180,6 +180,7 @@ export type Database = {
       }
       bugs: {
         Row: {
+          project: any
           actual_result: string | null
           assigned_to: string | null
           bug_id: string | null

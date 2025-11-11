@@ -7,8 +7,17 @@ import { Bug as BugIcon, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+type Project = {
+  id: string;
+  name: string | null;
+};
+
+type BugWithProject = Bug & {
+  project?: Project | null;
+};
+
 export default function RecentBugsSection() {
-  const [recentBugs, setRecentBugs] = useState<Bug[]>([]);
+  const [recentBugs, setRecentBugs] = useState<BugWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -19,17 +28,32 @@ export default function RecentBugsSection() {
   const fetchRecentBugs = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseBrowser
+      // Ambil 5 bugs terbaru
+      const { data: bugsData, error: bugsError } = await supabaseBrowser
         .from("bugs")
-        .select(`
-          *,
-          project:project_id(name)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(5);
 
-      if (error) throw error;
-      setRecentBugs(data || []);
+      if (bugsError) throw bugsError;
+
+      const bugs = bugsData || [];
+
+      // Ambil semua project terkait
+      const projectIds = Array.from(new Set(bugs.map((b) => b.project_id))).filter(Boolean);
+
+      const { data: projectsData } = await supabaseBrowser
+        .from("projects")
+        .select("id, name")
+        .in("id", projectIds);
+
+      // Map project ke bugs
+      const mappedBugs: BugWithProject[] = bugs.map((b) => ({
+        ...b,
+        project: projectsData?.find((p) => p.id === b.project_id) || null,
+      }));
+
+      setRecentBugs(mappedBugs);
     } catch (err) {
       console.error("Error fetching recent bugs:", err);
       setRecentBugs([]);

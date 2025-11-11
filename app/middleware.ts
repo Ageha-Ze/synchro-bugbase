@@ -32,6 +32,9 @@ export async function middleware(req: NextRequest) {
             name,
             value,
             ...options,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
           });
         },
         remove(name: string, options: CookieOptions) {
@@ -49,25 +52,25 @@ export async function middleware(req: NextRequest) {
             name,
             value: '',
             ...options,
+            maxAge: 0,
           });
         },
       },
     }
   );
 
-  // Ambil session user
+  await supabase.auth.getSession();
+
+  const { pathname } = req.nextUrl;
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { pathname } = req.nextUrl;
-
-  // Jika user belum login dan mengakses dashboard, redirect ke /auth
   if (!session && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/auth', req.url));
   }
 
-  // Jika user sudah login dan mengakses halaman login /auth, redirect ke /dashboard
   if (session && pathname === '/auth') {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
@@ -76,5 +79,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth'],
+  matcher: ['/dashboard/:path*', '/auth', '/projects/:path*', '/bug/:path*'],
 };

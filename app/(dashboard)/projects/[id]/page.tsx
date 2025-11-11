@@ -1,4 +1,4 @@
-import supabaseServer from "@/lib/supabaseServer";
+import {supabaseServer} from "@/lib/supabaseServer";
 import ProjectBugsClient from "./ProjectBugsClient";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 
@@ -12,8 +12,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   console.log("📌 ID type:", typeof id);
   console.log("📌 ID length:", id?.length);
 
-  const supabase = supabaseServer;
-
+  const supabase = await supabaseServer();
   // Debug query
   const { data: project, error: projectError } = await supabase
     .from("projects")

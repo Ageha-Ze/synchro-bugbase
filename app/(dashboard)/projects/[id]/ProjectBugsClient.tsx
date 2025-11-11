@@ -51,6 +51,23 @@ export default function ProjectBugsClient({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  function getSeverityStyle(severity?: string | null) {
+  switch (severity) {
+    case "Crash/Undoable":
+      return "bg-red-700 text-white"; // teks putih di atas hitam
+    case "High":
+      return "bg-orange-300 text-black"; // teks hitam di atas merah
+    case "Medium":
+      return "bg-yellow-300 text-black"; // teks hitam di atas kuning
+    case "Low":
+      return "bg-green-300 text-black"; // teks hitam di atas hijau
+    case "Suggestion":
+      return "bg-sky-300 text-black"; // teks hitam di atas biru muda
+    default:
+      return "bg-white text-gray-900"; // fallback aman
+  }
+};
+
   useEffect(() => {
     filterAndSortBugs();
   }, [bugs, searchQuery, filterSeverity, filterStatus, sortField, sortDirection]);
@@ -215,309 +232,298 @@ export default function ProjectBugsClient({
   };
 
   return (
-    <ClientConnectionHandler>
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 animate-fadeIn">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+  <ClientConnectionHandler>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
         {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-8 text-white animate-scaleIn">
+        <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-6 md:p-8 text-white overflow-hidden">
+          {/* subtle background glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24"></div>
 
-          <div className="relative z-10">
-            <div className="flex items-start justify-between mb-4">
-              <div>
+          <div className="relative z-10 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+              <div className="space-y-2">
                 <Button
                   onClick={() => router.push("/projects")}
-                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm mb-4 cursor-pointer transition-all hover:scale-105"
+                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm text-sm"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Projects
                 </Button>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-2 h-10 bg-white rounded-full"></div>
-                  <h1 className="text-4xl font-bold drop-shadow-md">{projectName}</h1>
-                </div>
-                <p className="text-indigo-100 text-lg ml-5">{projectDescription}</p>
+                <h1 className="text-2xl md:text-4xl font-bold leading-tight drop-shadow-sm">
+                  {projectName}
+                </h1>
+                {projectDescription && (
+                  <p className="text-indigo-100 text-sm md:text-lg">
+                    {projectDescription}
+                  </p>
+                )}
               </div>
 
-             <div className="flex flex-col items-end gap-3">
-  <Button
-    onClick={() => setShowModal(true)}
-    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm cursor-pointer transition-all hover:scale-105"
-  >
-    <Plus className="w-5 h-5 mr-2" />
-    New Bug
-  </Button>
-
-  <Button
-    onClick={() => setShowImportModal(true)}
-    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm cursor-pointer transition-all hover:scale-105"
-  >
-    <UploadCloud className="w-5 h-5 mr-2" />
-    Import Bugs
-  </Button>
-</div>
-
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={() => setShowModal(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm text-sm md:text-base"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Bug
+                </Button>
+                <Button
+                  onClick={() => setShowImportModal(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm text-sm md:text-base"
+                >
+                  <UploadCloud className="w-4 h-4 mr-2" />
+                  Import Bugs
+                </Button>
+              </div>
             </div>
 
-            <div className="flex gap-6 mt-6">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/30 hover:bg-white/30 transition-all">
-                <span className="text-indigo-100 text-sm">Total Bugs:</span>
-                <span className="text-white font-bold text-xl ml-2">{bugs.length}</span>
+            <div className="flex flex-wrap gap-4">
+              <div className="bg-white/20 rounded-xl px-4 py-2 border border-white/30 text-sm">
+                <span className="opacity-80">Total Bugs:</span>{" "}
+                <span className="font-bold">{bugs.length}</span>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/30 hover:bg-white/30 transition-all">
-                <span className="text-indigo-100 text-sm">Showing:</span>
-                <span className="text-white font-bold text-xl ml-2">{filteredBugs.length}</span>
+              <div className="bg-white/20 rounded-xl px-4 py-2 border border-white/30 text-sm">
+                <span className="opacity-80">Showing:</span>{" "}
+                <span className="font-bold">{filteredBugs.length}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search & Filter */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-100 p-6 animate-fadeIn">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
-              <input
-                type="text"
-                placeholder="Search bugs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              />
-            </div>
+<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 p-4 md:p-6">
+  <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+    {/* Search */}
+    <div className="flex-1 relative">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
+      <input
+        type="text"
+        placeholder="Search bugs..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-10 pr-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 placeholder:text-indigo-300 text-sm md:text-base transition-all"
+      />
+    </div>
 
-            <select
-              value={filterSeverity}
-              onChange={(e) => setFilterSeverity(e.target.value)}
-              className="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white font-medium text-gray-700 transition-all cursor-pointer hover:shadow-md"
-            >
-              <option value="all">All Severities</option>
-              <option value="Crash/Undoable">🔴 Crash/Undoable</option>
-              <option value="High">🟠 High</option>
-              <option value="Medium">🟡 Medium</option>
-              <option value="Low">🟢 Low</option>
-              <option value="Suggestion">💡 Suggestion</option>
-            </select>
+    {/* Filters */}
+    <div className="flex flex-wrap md:flex-nowrap gap-3">
+      <select
+        value={filterSeverity}
+        onChange={(e) => setFilterSeverity(e.target.value)}
+        className="flex-1 px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+      >
+        <option value="all">All Severities</option>
+        <option value="Crash/Undoable">💥 Crash/Undoable</option>
+        <option value="High">🔥 High</option>
+        <option value="Medium">🟡 Medium</option>
+        <option value="Low">🟢 Low</option>
+        <option value="Suggestion">💡 Suggestion</option>
+      </select>
 
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white font-medium text-gray-700 transition-all cursor-pointer hover:shadow-md"
-            >
-              <option value="all">All Status</option>
-              <option value="New">🆕 New</option>
-              <option value="Open">📂 Open</option>
-              <option value="Blocked">🚫 Blocked</option>
-              <option value="Fixed">✅ Fixed</option>
-              <option value="In Progress">⚙️ In Progress</option>
-            </select>
-          </div>
-        </div>
+      <select
+        value={filterStatus}
+        onChange={(e) => setFilterStatus(e.target.value)}
+        className="flex-1 px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+      >
+        <option value="all">All Status</option>
+        <option value="New">🆕 New</option>
+        <option value="Open">📂 Open</option>
+        <option value="Blocked">🚫 Blocked</option>
+        <option value="Fixed">✅ Fixed</option>
+        <option value="To Fix in Update">🧩 TFU</option>
+        <option value="Will Not Fix">🚷 WNF</option>
+        <option value="In Progress">⚙️ In Progress</option>
+      </select>
+    </div>
+  </div>
+</div>
+
 
         {/* Table */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-indigo-100 overflow-hidden animate-fadeIn">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b-2 border-indigo-200">
-  <tr>
-    {[
-      { key: "bug_number", label: "Bug ID" },
-      { key: "severity", label: "Severity" },
-      { key: "title", label: "Title & Location" },
-      { key: "priority", label: "Priority" },
-      { key: "status", label: "Status" },
-      { key: "result", label: "Result" },
-      { key: "created_at", label: "Created" },
-      { key: "actions", label: "Actions" },
-    ].map(({ key, label }) => (
-      <th
-        key={key}
-        onClick={() =>
-          key !== "actions" ? handleSort(key as keyof Bug) : undefined
-        }
-        className={`px-6 py-4 text-left text-sm font-bold text-slate-700 uppercase tracking-wider transition-all ${
-          key !== "actions"
-            ? "cursor-pointer hover:bg-indigo-100/50 select-none"
-            : ""
-        }`}
-      >
-        <div className="flex items-center gap-1">
-          {label}
-          {key !== "actions" && <SortIcon field={key as keyof Bug} />}
-        </div>
-      </th>
-    ))}
-  </tr>
-</thead>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 overflow-x-auto">
+          <table className="w-full text-sm md:text-base">
+          <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white border-b border-indigo-200 backdrop-blur-md">
+              <tr>
+                {[
+                  "Bug ID",
+                  "Severity",
+                  "Title & Location",
+                  "Priority",
+                  "Status",
+                  "Result",
+                  "Created",
+                  "Actions",
+                ].map((label, i) => (
+                  <th
+                    key={i}
+                className="px-4 md:px-6 py-3 text-left font-semibold text-indigo-800 uppercase text-xs md:text-sm tracking-wide"
+                  >
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-              <tbody className="divide-y divide-indigo-100">
-  {filteredBugs.length > 0 ? (
-    filteredBugs.map((bug, index) => (
-      <tr
-        key={bug.id}
-        onClick={() => router.push(`/bug/${bug.id}`)}
-        className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 cursor-pointer transition-all group animate-fadeIn"
-        style={{ animationDelay: `${index * 0.05}s` }}
-      >
-        {/* Bug ID */}
-        <td className="px-6 py-5 font-mono font-bold text-gray-900">
-  {formatBugId(bug)}
-</td>
+            <tbody className="divide-y divide-indigo-100">
+              {filteredBugs.length > 0 ? (
+                filteredBugs.map((bug, index) => (
+                  <tr
+                    key={bug.id}
+                    onClick={() => router.push(`/bug/${bug.id}`)}
+                  className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
+                    style={{ animationDelay: `${index * 0.03}s` }}
+                  >
+                    <td className="px-4 md:px-6 py-4 font-mono text-gray-900 font-bold">
+                      {formatBugId(bug)}
+                    </td>
 
-        {/* Severity */}
-        <td className="px-6 py-5">
-          <p className="text-sm font-bold text-gray-900">
-            {(() => {
-              switch (bug.severity) {
-                case "Crash/Undoable":
-                  return "💥Crash";
-                case "High":
-                  return "🔥High";
-                case "Medium":
-                  return "🟡Medium";
-                case "Low":
-                  return "🟢Low";
-                case "Suggestion":
-                  return "💡Suggestion";
-                default:
-                  return bug.severity;
-              }
-            })()}
-          </p>
-        </td>
+                    {/* Severity */}
+                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                      {(() => {
+                        switch (bug.severity) {
+                          case "Crash/Undoable":
+                            return "💥 Crash";
+                          case "High":
+                            return "🔥 High";
+                          case "Medium":
+                            return "🟡 Medium";
+                          case "Low":
+                            return "🟢 Low";
+                          case "Suggestion":
+                            return "💡 Suggestion";
+                          default:
+                            return bug.severity;
+                        }
+                      })()}
+                    </td>
 
-        {/* Title & Description */}
-        <td className="px-6 py-5 max-w-md">
-          <div className="flex items-center gap-2">
-            <p className="text-base tracking-tight font-mono group-hover:text-indigo-600 transition-colors">
-              {bug.title}
-            </p>
-          </div>
-          <p className="text-xs text-gray-500 line-clamp-2">
-            {bug.description}
-          </p>
-        </td>
+                    {/* Title & Description */}
+                    <td className="px-4 md:px-6 py-4 max-w-md">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {bug.title}
+                      </p>
+                      <p className="text-xs text-gray-500 line-clamp-2">
+                        {bug.description}
+                      </p>
+                    </td>
 
-        {/* Priority */}
-        <td className="px-6 py-5">
-        <p className="text-sm font-bold text-gray-900">
-            {(() => {
-              switch (bug.priority) {
-                case "Highest":
-                  return "🚨Dire";
-                case "High":
-                  return "⚠️High";
-                case "Medium":
-                  return "🟠Mid";
-                case "Low":
-                  return "🟢Low";
-                default:
-                  return bug.priority;
-              }
-            })()}
-             </p>
-        </td>
+                    {/* Priority */}
+                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                      {(() => {
+                        switch (bug.priority) {
+                          case "Highest":
+                            return "🚨 Dire";
+                          case "High":
+                            return "⚠️ High";
+                          case "Medium":
+                            return "🟠 Mid";
+                          case "Low":
+                            return "🟢 Low";
+                          default:
+                            return bug.priority;
+                        }
+                      })()}
+                    </td>
 
-        {/* Status */}
-        <td className="px-6 py-5">
-        <p className="text-sm font-bold text-gray-900">
-            {(() => {
-              switch (bug.status) {
-                case "New":
-                  return "🆕New";
-                case "Open":
-                  return "📂Open";
-                case "Blocked":
-                  return "🚫Blocked";
-                case "Fixed":
-                  return "✅Fixed";
-                case "To Fix in Update":
-                  return "🧩TFU";
-                case "Will Not Fix":
-                  return "🚷WNF";
-                case "In Progress":
-                  return "⚙️ In Progress";
-                default:
-                  return bug.status;
-              }
-            })()}
-  </p>
-        </td>
+                    {/* Status */}
+                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                      {(() => {
+                        switch (bug.status) {
+                          case "New":
+                            return "🆕 New";
+                          case "Open":
+                            return "📂 Open";
+                          case "Blocked":
+                            return "🚫 Blocked";
+                          case "Fixed":
+                            return "✅ Fixed";
+                          case "To Fix in Update":
+                            return "🧩 TFU";
+                          case "Will Not Fix":
+                            return "🚷 WNF";
+                          case "In Progress":
+                            return "⚙️ In Progress";
+                          default:
+                            return bug.status;
+                        }
+                      })()}
+                    </td>
 
-        {/* Result */}
-        <td className="px-6 py-5">
-        <p className="text-sm font-bold text-gray-900">
+                    {/* Result */}
+                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                      {(() => {
+                        switch (bug.result) {
+                          case "Confirmed":
+                            return "✅ Confirmed";
+                          case "Closed":
+                            return "🔒 Closed";
+                          case "Unresolved":
+                            return "⚠️ Unresolved";
+                          case "To-Do":
+                          default:
+                            return "📝 To-Do";
+                        }
+                      })()}
+                    </td>
 
-            {(() => {
-              switch (bug.result) {
-                case "Confirmed":
-                  return "✅Confirmed";
-                case "Closed":
-                  return "🔒Closed";
-                case "Unresolved":
-                  return "⚠️Unresolved";
-                case "To-Do":
-                default:
-                  return "📝To-Do";
-              }
-            })()}
-  </p>
-        </td>
+                    {/* Created */}
+                    <td className="px-4 md:px-6 py-4 text-slate-600">
+                      {bug.created_at
+                        ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "-"}
+                    </td>
 
-        {/* Created Date */}
-<td className="px-6 py-5 text-sm text-slate-600">
-  {bug.created_at ? new Date(bug.created_at).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }) : "-"}
-</td>
-
-        {/* Actions */}
-        <td className="px-6 py-5 text-right">
-          <button
-            onClick={(e) => handleDeleteBug(bug.id, e)}
-            disabled={deletingId === bug.id}
-            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all cursor-pointer hover:scale-105 hover:shadow-md"
-          >
-            {deletingId === bug.id ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-          </button>
-        </td>
-      </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan={8} className="px-6 py-16 text-center animate-scaleIn">
-        <div className="text-gray-400">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl mb-4">
-            <BugIcon className="w-10 h-10 text-indigo-600" />
-          </div>
-          <p className="text-xl font-bold text-gray-900 mb-2">No bugs found</p>
-          <p className="text-sm text-gray-500">
-            Try adjusting your search or filters
-          </p>
-        </div>
-      </td>
-    </tr>
-  )}
-</tbody>
-
-            </table>
-          </div>
+                    {/* Actions */}
+                    <td className="px-4 md:px-6 py-4 text-right">
+                      <button
+                        onClick={(e) => handleDeleteBug(bug.id, e)}
+                        disabled={deletingId === bug.id}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-xs md:text-sm transition-all disabled:opacity-50"
+                      >
+                        {deletingId === bug.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-4 py-16 text-center">
+                    <div className="text-gray-400">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
+                        <BugIcon className="w-8 h-8 text-indigo-600" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900">
+                        No bugs found
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Try adjusting your search or filters
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
-{showImportModal && (
-  <ImportBugModal
-    projectId={projectId}
-    onClose={() => setShowImportModal(false)}
-    onImport={handleImportBugs} // <-- pakai fungsi ini
-  />
-)}
+        {showImportModal && (
+          <ImportBugModal
+            projectId={projectId}
+            onClose={() => setShowImportModal(false)}
+            onImport={handleImportBugs}
+          />
+        )}
 
         {showModal && (
           <NewBugModal
@@ -527,41 +533,8 @@ export default function ProjectBugsClient({
           />
         )}
       </div>
-
-      
-
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        .animate-scaleIn {
-          animation: scaleIn 0.4s ease-out forwards;
-        }
-      `}</style>
     </div>
-    </ClientConnectionHandler>
-  );
+  </ClientConnectionHandler>
+);
+
 }

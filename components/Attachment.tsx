@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 
 export default function Attachments({ bugId }: { bugId: number }) {
   const [file, setFile] = useState<File | null>(null);

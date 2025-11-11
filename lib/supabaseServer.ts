@@ -1,15 +1,46 @@
 // lib/supabaseServer.ts
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { Cookie } from "next-cookie";
 import type { Database } from "@/types/supabase";
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env variables");
+export function supabaseServer() {
+  let cookieStore: any;
+
+  try {
+    // ✅ Production / server-side environment
+    cookieStore = new Cookie();
+  } catch {
+    // 🧩 Localhost / dev fallback
+    cookieStore = {
+      get: () => undefined,
+      set: () => {},
+      remove: () => {},
+    };
+  }
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get?.(name);
+        },
+        set(name: string, value: string, options: any) {
+          try {
+            cookieStore.set?.(name, value, options);
+          } catch {
+            /* ignore dev mode */
+          }
+        },
+        remove(name: string, options: any) {
+          try {
+            cookieStore.remove?.(name, options);
+          } catch {
+            /* ignore dev mode */
+          }
+        },
+      },
+    }
+  );
 }
-
-// buat Supabase client untuk server-side, pakai service role key
-const supabaseServer: SupabaseClient<Database> = createClient<Database>(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-export default supabaseServer;

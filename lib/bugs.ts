@@ -1,5 +1,5 @@
 // lib/bugs.ts
-import supabaseServer from "@/lib/supabaseServer";
+import {supabaseServer} from "@/lib/supabaseServer";
 import type { Database } from "@/types/supabase";
 
 // --- Type definition for Bug (dari generated types) ---
@@ -45,7 +45,8 @@ export async function createBug(payload: Partial<BugInsert>): Promise<Bug> {
     actual_result: payload.actual_result || "",
     assigned_to: payload.assigned_to || null,
   };
-  const { data, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
     .from("bugs")
     .insert([safePayload])
     .select()
@@ -71,7 +72,8 @@ export type RecentBugs = Bug & {
 
 // --- Get all bugs ---
 export async function getBugs(): Promise<Bug[]> {
-  const { data, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
     .from("bugs")
     .select("*")
     .order("created_at", { ascending: false });
@@ -82,7 +84,8 @@ export async function getBugs(): Promise<Bug[]> {
 
 // --- Get bugs by project ---
 export async function getBugsByProject(projectId: string): Promise<Bug[]> {
-  const { data, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
     .from("bugs")
     .select("*")
     .eq("project_id", projectId)
@@ -94,7 +97,8 @@ export async function getBugsByProject(projectId: string): Promise<Bug[]> {
 
 // --- Get single bug ---
 export async function getBugById(bugId: string): Promise<Bug | null> {
-  const { data, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
     .from("bugs")
     .select("*")
     .eq("id", bugId)
@@ -109,7 +113,8 @@ export async function getBugById(bugId: string): Promise<Bug | null> {
 
 // --- Update bug ---
 export async function updateBug(bugId: string, payload: Partial<BugUpdate>): Promise<Bug> {
-  const { data, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
     .from("bugs")
     .update(payload)
     .eq("id", bugId)
@@ -124,7 +129,8 @@ export async function updateBug(bugId: string, payload: Partial<BugUpdate>): Pro
 
 // --- Delete bug ---
 export async function deleteBug(bugId: string): Promise<void> {
-  const { error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { error } = await supabase
     .from("bugs")
     .delete()
     .eq("id", bugId);

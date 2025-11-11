@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabaseBrowser";
+import supabaseBrowser from "@/lib/supabaseBrowser";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 export default function LoginPage() {
-  const supabase = createBrowserSupabaseClient();
+  const supabase = supabaseBrowser;
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

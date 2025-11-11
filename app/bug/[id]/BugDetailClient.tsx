@@ -401,129 +401,137 @@ useEffect(() => {
   };
 
   return (
-    <ClientConnectionHandler>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main */}
-            <div className="lg:col-span-2 space-y-6">
-              {loading && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-                  <div className="text-center space-y-2">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
-                    <p className="text-indigo-600 font-semibold">Fetching Data...</p>
+  <ClientConnectionHandler>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-indigo-50 to-blue-100 text-gray-900 dark:from-neutral-900 dark:via-neutral-950 dark:to-black transition-colors">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 dark:bg-black/60 backdrop-blur-sm">
+            <div className="text-center space-y-2">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+              <p className="text-indigo-600 font-semibold">Fetching Data...</p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* MAIN */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Header */}
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-indigo-100 dark:border-neutral-800 p-6 sm:p-8">
+              <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                <Button
+                  onClick={() => {
+                    router.replace(`/projects/${projectId}`);
+                    router.refresh();
+                  }}
+                  className="bg-white hover:bg-indigo-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-indigo-600 border-2 border-indigo-200 dark:border-indigo-700 transition-all"
+                  size="sm"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                </Button>
+                <div className="flex gap-2">
+                  {editing && (
+                    <Button
+                      onClick={() => {
+                        setEditing(false);
+                        setFormData(bug);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 dark:border-neutral-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800"
+                    >
+                      <X className="w-4 h-4 mr-2" /> Cancel
+                    </Button>
+                  )}
+                  <Button
+                    onClick={editing ? handleSave : () => setEditing(true)}
+                    size="sm"
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : editing ? (
+                      <Save className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Edit2 className="w-4 h-4 mr-2" />
+                    )}
+                    {editing ? "Save Changes" : "Edit Bug"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Title & Description */}
+              {editing ? (
+                <div className="space-y-4">
+                  <input
+                    name="title"
+                    value={(formData.title as string) || ""}
+                    onChange={handleChange}
+                    className="w-full border border-indigo-200 dark:border-neutral-700 rounded-xl p-3 bg-white dark:bg-neutral-900"
+                    placeholder="Title"
+                  />
+                  <textarea
+                    name="description"
+                    value={(formData.description as string) || ""}
+                    onChange={handleChange}
+                    className="w-full border border-indigo-200 dark:border-neutral-700 rounded-xl p-3 bg-white dark:bg-neutral-900"
+                    placeholder="Bug Location"
+                    rows={2}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {bug.bug_number && (
+                      <span className="text-indigo-600">
+                        SCB-{bug.project_number ?? "01"}-
+                        {String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
+                      </span>
+                    )}
+                    {bug.title}
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2">{bug.description}</p>
+                  <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
+                    <Calendar className="w-4 h-4" />{" "}
+                    {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Header */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <Button
-                    onClick={() => {
-                      router.replace(`/projects/${projectId}`);
-                      router.refresh();
-                    }}
-                    className="bg-white hover:bg-indigo-50 text-indigo-600 border-2 border-indigo-200"
-                    size="sm"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
-                  </Button>
-                  <div className="flex gap-2">
-                    {editing && (
-                      <Button
-                        onClick={() => {
-                          setEditing(false);
-                          setFormData(bug);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="w-4 h-4 mr-2" />Cancel
-                      </Button>
-                    )}
-                    <Button
-                      onClick={editing ? handleSave : () => setEditing(true)}
-                      size="sm"
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : editing ? (
-                        <Save className="w-4 h-4 mr-2" />
-                      ) : (
-                        <Edit2 className="w-4 h-4 mr-2" />
-                      )}
-                      {editing ? "Save Changes" : "Edit Bug"}
-                    </Button>
-                  </div>
-                </div>
+            {/* Details */}
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-indigo-100 dark:border-neutral-800 p-6 sm:p-8 space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                Bug Details
+              </h2>
 
-                {/* Title & Description */}
-                {editing ? (
-                  <div className="space-y-4">
-                    <input
-                      name="title"
-                      value={(formData.title as string) || ""}
-                      onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 rounded-xl p-3"
-                      placeholder="Title"
-                    />
+              {["steps_to_reproduce", "expected_result", "actual_result"].map((f) => (
+                <div key={f}>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    {f.replaceAll("_", " ")}
+                  </label>
+                  {editing ? (
                     <textarea
-                      name="description"
-                      value={(formData.description as string) || ""}
+                      name={f}
+                      value={(formData as any)[f] || ""}
                       onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 rounded-xl p-3"
-                      placeholder="Bug Location"
-                      rows={2}
+                      className="w-full border border-indigo-200 dark:border-neutral-700 rounded-xl p-4 bg-white dark:bg-neutral-900"
+                      rows={4}
                     />
-                  </div>
-                ) : (
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      {bug.bug_number ? (
-                        <span className="text-indigo-600">
-                          SCB-{bug.project_number ?? "01"}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
-                        </span>
-                      ) : null}
-                      {bug.title}
-                    </h1>
-                    <p className="text-gray-600 mt-2">{bug.description}</p>
-                    <div className="flex items-center gap-2 text-sm text-indigo-600 mt-2">
-                      <Calendar className="w-4 h-4" /> Created:{" "}
-                      {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
+                  ) : (
+                    <div className="prose prose-sm max-w-none bg-gray-50 dark:bg-neutral-800 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700">
+                      {(bug as any)[f]
+                        ? (bug as any)[f].split("\n").map((line: string, i: number) => <p key={i}>{line}</p>)
+                        : <p className="text-gray-400 italic">No data provided</p>}
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              ))}
 
-              {/* Details */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8 space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">Bug Details</h2>
-
-                {["steps_to_reproduce", "expected_result", "actual_result"].map((f) => (
-                  <div key={f}>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">{f.replaceAll("_", " ")}</label>
-                    {editing ? (
-                      <textarea
-                        name={f}
-                        value={(formData as any)[f] || ""}
-                        onChange={handleChange}
-                        className="w-full border-2 border-indigo-200 rounded-xl p-4"
-                        rows={4}
-                      />
-                    ) : (
-                      <div className="prose prose-sm max-w-none bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl p-5 border">
-                        {(bug as any)[f]
-                          ? (bug as any)[f].split("\n").map((line: string, i: number) => <p key={i}>{line}</p>)
-                          : <p className="text-gray-400 italic">No data provided</p>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Attachments Section */}
+             {/* Attachments Section */}
                 <div>
                   <label className="block text-sm font-bold mb-2 text-gray-800 dark:text-gray-100">Attachments</label>
 
@@ -704,32 +712,53 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-6 sticky top-6 space-y-5">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Status & Priority</h2>
-                {["status", "severity", "priority", "result"].map((k) => (
-                  <div key={k} className="mb-3">
-                    <label className="block text-sm font-bold text-gray-700 mb-2 capitalize">{k}</label>
-                    {editing ? (
-                      <select name={k} value={(formData as any)[k] ?? ""} onChange={handleChange} className="w-full border-2 border-indigo-200 rounded-xl p-3 font-medium">
-                        {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
-                    ) : (
-                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold border-2 ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
-                        {(bug as any)[k] || "To-Do"}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+
+          {/* SIDEBAR */}
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-md border border-indigo-100 dark:border-neutral-800 p-6 sticky top-6 space-y-5">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Status & Priority</h2>
+              {["status", "severity", "priority", "result"].map((k) => (
+                <div key={k} className="mb-3">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                    {k}
+                  </label>
+                  {editing ? (
+                    <select
+                      name={k}
+                      value={(formData as any)[k] ?? ""}
+                      onChange={handleChange}
+                      className="w-full border border-indigo-200 dark:border-neutral-700 rounded-xl p-3 bg-white dark:bg-neutral-900"
+                    >
+                      {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                      {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                      {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                      {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className={`inline-block px-4 py-2 rounded-full text-sm font-semibold border ${getBadgeColor(
+                        k,
+                        (bug as any)[k] || "To-Do"
+                      )}`}
+                    >
+                      {(bug as any)[k] || "To-Do"}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </ClientConnectionHandler>
-  );
+    </div>
+  </ClientConnectionHandler>
+);
 }

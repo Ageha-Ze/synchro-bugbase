@@ -71,8 +71,6 @@ const fetchRecentBugs = async (): Promise<RecentBugs[]> => {
   }
 };
 
-
-
   useEffect(() => {
     fetchProjects();
     fetchRecentBugs().then(setRecentBugs);
@@ -165,10 +163,7 @@ const fetchRecentBugs = async (): Promise<RecentBugs[]> => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-purple-400 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-          </div>
+          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-600 font-medium">Loading projects...</p>
         </div>
       </div>
@@ -176,221 +171,208 @@ const fetchRecentBugs = async (): Promise<RecentBugs[]> => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-500 to-red-400 rounded-2xl shadow-md p-5 sm:p-8 text-white relative overflow-hidden">          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold mb-2 drop-shadow-md">Projects</h1>
-              <p className="text-indigo-100 text-lg">
-                Manage your bug tracking projects
+              <h1 className="text-3xl sm:text-4xl font-bold mb-1">Projects</h1>
+              <p className="text-indigo-100 text-sm sm:text-base">
+                Manage and track all your projects easily
               </p>
-              <div className="mt-4 flex items-center gap-6 text-sm">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <span className="font-semibold text-xl">{projects.length}</span>
-                  <span className="ml-2 text-indigo-100">Total Projects</span>
-                </div>
+              <div className="mt-4">
+                <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg text-sm">
+                  <strong className="text-xl">{projects.length}</strong> total
+                  projects
+                </span>
               </div>
             </div>
             <Button
               onClick={() => setShowModal(true)}
-              className="bg-white hover:bg-indigo-50 text-indigo-600 font-semibold px-6 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
+              className="bg-white hover:bg-indigo-50 text-indigo-600 font-semibold px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              New Project
+              <Plus className="w-5 h-5 mr-2" /> New Project
             </Button>
           </div>
         </div>
 
-        {/* Table with modern design */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-indigo-100 overflow-hidden">
-          {projects.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl mb-6">
-                <FolderOpen className="w-12 h-12 text-indigo-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No projects yet
-              </h3>
-              <p className="text-gray-500 mb-8 text-lg">
-                Get started by creating your first project
-              </p>
-              <Button
-                onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all text-base font-semibold"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Create First Project
-              </Button>
+        {/* Project List */}
+        {projects.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-indigo-100 p-12 text-center">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl mb-6">
+              <FolderOpen className="w-12 h-12 text-indigo-600" />
             </div>
-          ) : (
-            <div className="overflow-x-auto">
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              No projects yet
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Create your first project to start tracking bugs
+            </p>
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+            >
+              <Plus className="w-5 h-5 mr-2" /> Create Project
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-indigo-100 overflow-hidden">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b-2 border-indigo-200">
+                <thead className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b border-indigo-200">
                   <tr>
                     <th
                       onClick={() => handleSort("name")}
-                      className="px-6 py-4 text-left text-sm font-bold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100/50 transition-colors"
+                      className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase cursor-pointer hover:bg-indigo-100/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        Project Name
-                        <SortIcon field="name" />
+                        Project <SortIcon field="name" />
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-slate-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase">
                       Description
                     </th>
                     <th
                       onClick={() => handleSort("created_at")}
-                      className="px-6 py-4 text-left text-sm font-bold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100/50 transition-colors"
+                      className="px-6 py-4 text-left text-sm font-semibold text-slate-700 uppercase cursor-pointer hover:bg-indigo-100/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        Created Date
-                        <SortIcon field="created_at" />
+                        Created <SortIcon field="created_at" />
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-right text-sm font-bold text-slate-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700 uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-indigo-100">
-                  {sortedProjects.map((project, index) => (
+                  {sortedProjects.map((p) => (
                     <tr
-                      key={project.id}
-                      onClick={() => handleProjectClick(project.id)}
+                      key={p.id}
+                      onClick={() => router.push(`/projects/${p.id}`)}
                       className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 cursor-pointer transition-all group"
-                      style={{ 
-                        animation: `fadeIn 0.3s ease-in-out ${index * 0.05}s backwards` 
-                      }}
                     >
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 group-hover:scale-150 transition-transform"></div>
-                          <div>
-  <span className="text-base font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-    {project.name}
-  </span>
-  {/* Progress Bar kecil */}
-  <ProjectProgress projectId={project.id} />
-</div>
-
+                      <td className="px-6 py-5 font-medium text-gray-900 group-hover:text-indigo-600">
+                        {p.name}
+                        <ProjectProgress projectId={p.id} />
+                      </td>
+                      <td className="px-6 py-5 text-gray-600 text-sm line-clamp-2">
+                        {p.description || "—"}
+                      </td>
+                      <td className="px-6 py-5 text-sm text-slate-600">
+                        {p.created_at
+                          ? new Date(p.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditProject(p);
+                            }}
+                            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            <span className="hidden xl:inline">Edit</span>
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteProject(p.id, e)}
+                            disabled={deletingId === p.id}
+                            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                          >
+                            {deletingId === p.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Deleting
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="w-4 h-4" />
+                                <span className="hidden xl:inline">Delete</span>
+                              </>
+                            )}
+                          </button>
                         </div>
                       </td>
-                      <td className="px-6 py-5 max-w-md">
-                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                          {project.description || "—"}
-                        </p>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                          {project.created_at
-                            ? new Date(project.created_at).toLocaleDateString(
-                                "id-ID",
-                                { day: "numeric", month: "short", year: "numeric" }
-                              )
-                            : "—"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-right flex justify-end gap-2">
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      setEditProject(project);
-    }}
-    className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-  >
-    <Pencil className="w-4 h-4" />
-    <span className="hidden group-hover:inline">Edit</span>
-  </button>
-
-  <button
-    onClick={(e) => handleDeleteProject(project.id, e)}
-    disabled={deletingId === project.id}
-    className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
-  >
-    {deletingId === project.id ? (
-      <>
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span>Deleting...</span>
-      </>
-    ) : (
-      <>
-        <Trash2 className="w-4 h-4" />
-        <span className="hidden group-hover:inline">Delete</span>
-      </>
-    )}
-  </button>
-</td>
-
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
 
-        {/* Modal */}
+            {/* Mobile Cards */}
+            <div className="md:hidden grid gap-4 p-4">
+              {sortedProjects.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => router.push(`/projects/${p.id}`)}
+                  className="bg-white rounded-xl border border-indigo-100 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {p.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                    {p.description || "—"}
+                  </p>
+                  <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
+                    <span>
+                      {p.created_at
+                        ? new Date(p.created_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditProject(p);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-700"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteProject(p.id, e)}
+                        disabled={deletingId === p.id}
+                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Modals */}
         {showModal && (
           <NewProjectModal
             onClose={() => setShowModal(false)}
-            onNewProject={handleNewProject}
+            onNewProject={(p) => setProjects((prev) => [p, ...prev])}
           />
         )}
         {editProject && (
-  <EditProjectModal
-    project={editProject}
-    onClose={() => setEditProject(null)}
-    onUpdated={handleUpdateProject}
-  />
-)}
-
+          <EditProjectModal
+            project={editProject}
+            onClose={() => setEditProject(null)}
+            onUpdated={(p) =>
+              setProjects((prev) =>
+                prev.map((item) => (item.id === p.id ? p : item))
+              )
+            }
+          />
+        )}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-          /* Hover baris tabel project */
-  tr.group:hover {
-    background: linear-gradient(90deg, #eef2ff, #ede9fe);
-    box-shadow: inset 0 0 0 1px #c7d2fe;
-    transform: scale(1);
-  }
-
-  tr.group {
-    transition: all 0.25s ease-in-out;
-  }
-
-  /* Hover pada tombol edit dan delete */
-  button.text-indigo-600:hover,
-  button.text-red-600:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-  }
-
-  button.text-red-600:hover {
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-  }
-
-  /* Efek halus untuk nama project */
-  .group:hover .text-gray-900 {
-    color: #4f46e5 !important;
-  }
-
-  td {
-    transition: all 0.25s ease-in-out;
-      `}</style>
     </div>
   );
 }
