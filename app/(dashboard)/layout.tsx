@@ -33,10 +33,16 @@ function DynamicGreeting() {
   }, []);
 
   return (
-    <h1 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 dark:text-gray-100 truncate">
-      Hi, Partner, {timeData.greeting}! Now is {timeData.date}, hope your day is great!
-    </h1>
-  );
+   <h1
+    className="
+      text-sm sm:text-base md:text-lg font-semibold text-gray-700 dark:text-gray-100
+      truncate md:whitespace-nowrap
+      [@media(max-width:768px)]:truncate-0 [@media(max-width:768px)]:whitespace-normal [@media(max-width:768px)]:leading-snug
+    "
+  >
+    Hi, Partner, {timeData.greeting}! Now is {timeData.date}, hope your day is great!
+  </h1>
+);
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
