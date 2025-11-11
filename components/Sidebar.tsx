@@ -49,7 +49,7 @@ export default function Sidebar() {
   </div>
 
   {/* Navigation */}
-  <nav className="flex-1 p-4 space-y-2 overflow-y-auto flex flex-col">
+  <nav className="flex-1 p-4 space-y-2 overflow-y-auto md:space-y-2 md:flex-col md:overflow-y-auto flex md:flex-col">
     <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
       <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
       <span className="ml-1.5 truncate">Dashboard</span>
@@ -60,16 +60,15 @@ export default function Sidebar() {
       <span className="ml-1.5 truncate">Projects</span>
     </Link>
 
-    {/* Logout button untuk semua layar */}
-<button
-  onClick={handleLogout}
-  disabled={loading}
-  className="flex items-center gap-2 text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-4 rounded-lg transition-all duration-300 w-full"
->
-  <LogOut className="w-5 h-5" />
-  {loading ? 'Logging out...' : 'Logout'}
-</button>
-
+    {/* Logout button untuk mobile */}
+    <button
+      onClick={handleLogout}
+      disabled={loading}
+      className="flex items-center gap-1 text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-3 rounded-lg transition-all duration-300 md:hidden"
+    >
+      <LogOut className="w-4 h-4" />
+      {loading ? 'Logging out...' : 'Logout'}
+    </button>
   </nav>
 
   <style jsx>{`
