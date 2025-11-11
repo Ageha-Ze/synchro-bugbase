@@ -34,93 +34,92 @@ export default function Sidebar() {
   }, [router]);
 
   return (
-    <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col shadow-sm">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-500 to-red-400">
-        <div className="relative">
-          <img
+  <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col shadow-sm">
+       {/* Header */}
+  <div className="flex items-center gap-3 px-5 py-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-500 to-red-400">
+    <div className="relative">
+      <img
         src="https://static.thenounproject.com/png/bug-tracking-icon-2119186-512.png"
         alt="Bug Tracking Icon"
         className="w-10 h-10 transition-transform hover:scale-125"
       />
-      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></span> </div>
-        <span className="font-extrabold text-lg text-white tracking-tight">
-          Synchro BugBase
-        </span>
-      </div>
+      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+    </div>
+    <span className="font-extrabold text-lg text-white tracking-tight">Synchro BugBase</span>
+  </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
-          <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-          <span className="ml-1.5">Dashboard</span>
-        </Link>
+  {/* Navigation */}
+  <nav className="flex-1 p-4 space-y-2 overflow-y-auto md:space-y-2 md:flex-col md:overflow-y-auto flex md:flex-col">
+    <Link href="/dashboard" className={`${linkClass('/dashboard')} group`}>
+      <LayoutDashboard className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+      <span className="ml-1.5 truncate">Dashboard</span>
+    </Link>
 
-        <Link href="/projects" className={`${linkClass('/projects')} group`}>
-          <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
-          <span className="ml-1.5">Projects</span>
-        </Link>
-      </nav>
+    <Link href="/projects" className={`${linkClass('/projects')} group`}>
+      <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+      <span className="ml-1.5 truncate">Projects</span>
+    </Link>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-indigo-100">
-        <button
-          onClick={handleLogout}
-          disabled={loading}
-          className="flex items-center gap-2 w-full justify-center text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 rounded-lg transition-all duration-300 disabled:opacity-50"
-        >
-          <LogOut className="w-4 h-4" />
-          {loading ? 'Logging out...' : 'Logout'}
-        </button>
-      </div>
+    {/* Logout button untuk mobile */}
+    <button
+      onClick={handleLogout}
+      disabled={loading}
+      className="flex items-center gap-1 text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-3 rounded-lg transition-all duration-300 md:hidden"
+    >
+      <LogOut className="w-4 h-4" />
+      {loading ? 'Logging out...' : 'Logout'}
+    </button>
+  </nav>
 
-      <style jsx>{`
-        aside {
-          animation: fadeInSidebar 0.4s ease-in-out;
-        }
-        @keyframes fadeInSidebar {
-          from {
-            opacity: 0;
-            transform: translateX(-16px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
+  <style jsx>{`
+    aside {
+      animation: fadeInSidebar 0.4s ease-in-out;
+    }
+    @keyframes fadeInSidebar {
+      from {
+        opacity: 0;
+        transform: translateX(-16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
 
-        @media (max-width: 768px) {
-  aside {
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-    top: auto;
-    flex-direction: row;
-    border-top: 1px solid #e5e7eb;
-    border-right: none;
-    background: white;
-    z-index: 50;
-  }
+    @media (max-width: 768px) {
+      aside {
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+        top: auto;
+        flex-direction: row;
+        justify-content: flex-end;
+        border-top: 1px solid #e5e7eb;
+        border-right: none;
+        background: white;
+        z-index: 50;
+        padding: 0 1rem;
+      }
 
-  nav {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    padding: 0.5rem 0;
-    overflow-x: auto; /* tambahkan ini */
-  }
+      nav {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        overflow-x: auto;
+        flex: 1;
+      }
 
-  nav a {
-    white-space: nowrap; /* agar teks tidak wrap */
-    flex-shrink: 0; /* jangan mengecil */
-    font-size: 0.75rem; /* teks lebih kecil di mobile */
-  }
-
-  .p-4.border-t {
-    display: none; /* hide footer button */
-  }
-}
-      `}</style>
+      nav a,
+      nav button {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.75rem;
+      }
+    }
+  `}</style>
     </aside>
   );
 }
