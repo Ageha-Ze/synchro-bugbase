@@ -90,28 +90,36 @@ export default function Sidebar() {
         }
 
         @media (max-width: 768px) {
-          aside {
-            position: fixed;
-            width: 100%;
-            height: auto;
-            bottom: 0;
-            top: auto;
-            flex-direction: row;
-            border-top: 1px solid #e5e7eb;
-            border-right: none;
-            background: white;
-            z-index: 50;
-          }
-          nav {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-          }
-          .p-4.border-t {
-            display: none;
-          }
-        }
+  aside {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    top: auto;
+    flex-direction: row;
+    border-top: 1px solid #e5e7eb;
+    border-right: none;
+    background: white;
+    z-index: 50;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+    overflow-x: auto; /* tambahkan ini */
+  }
+
+  nav a {
+    white-space: nowrap; /* agar teks tidak wrap */
+    flex-shrink: 0; /* jangan mengecil */
+    font-size: 0.75rem; /* teks lebih kecil di mobile */
+  }
+
+  .p-4.border-t {
+    display: none; /* hide footer button */
+  }
+}
       `}</style>
     </aside>
   );
