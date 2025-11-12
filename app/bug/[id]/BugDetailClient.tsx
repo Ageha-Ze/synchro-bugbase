@@ -661,21 +661,101 @@ useEffect(() => {
                 </div>
 
                 {/* Preview modal */}
-                {previewOpen && previewUrl && (
-                  <div onClick={closePreview} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
-                    <div onClick={(e) => e.stopPropagation()} className="relative bg-black rounded-2xl overflow-hidden shadow-2xl max-w-4xl max-h-[85vh] animate-scaleIn pointer-events-auto">
-                      <button onClick={closePreview} className="absolute top-3 right-3 bg-white/70 hover:bg-white text-gray-800 rounded-full p-2 shadow transition-all z-50"><X className="w-5 h-5" /></button>
-                      {previewType === "image" && <img src={previewUrl || ""} alt="Preview" className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg bg-black" />}
-                      {previewType === "video" && (
-                        <div className="relative flex flex-col items-center justify-center bg-black rounded-lg overflow-hidden">
-                          <video key={previewUrl} src={previewUrl || ""} controls playsInline autoPlay muted crossOrigin="anonymous" preload="metadata" style={{ width: "100%", maxHeight: "80vh", borderRadius: "0.5rem", backgroundColor: "black", marginTop: "1rem" }} onError={(e) => console.error("Video failed to load:", e)} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+{previewOpen && previewUrl && modalMounted && (
+  <div 
+    onClick={closePreview} 
+    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn"
+    style={{ margin: 0, padding: 0, height: '100vh', width: '100vw' }}
+  >
+    <div 
+      onClick={(e) => e.stopPropagation()} 
+      className="relative flex items-center justify-center pointer-events-auto"
+    >
+      <button 
+        onClick={closePreview} 
+        className="absolute -top-12 right-0 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all z-50"
+      >
+        <X className="w-5 h-5" />
+      </button>
+      
+      {previewType === "image" && (
+        <img 
+          src={previewUrl || ""} 
+          alt="Preview" 
+          className="max-w-[90vw] max-h-[85vh] w-auto h-auto object-contain rounded-lg shadow-2xl" 
+        />
+      )}
+      
+      {previewType === "video" && (
+        <div className="bg-black rounded-lg overflow-hidden shadow-2xl">
+          <video 
+            key={previewUrl} 
+            src={previewUrl || ""} 
+            controls 
+            playsInline 
+            autoPlay 
+            muted 
+            crossOrigin="anonymous" 
+            preload="metadata" 
+            style={{ 
+              width: "100%", 
+              maxWidth: "90vw",
+              maxHeight: "80vh",
+              backgroundColor: "black",
+              objectFit: "contain"
+            }}
+            onError={(e) => console.error("Video failed to load:", e)} 
+          />
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
-                {/* Comments */}
+                
+              </div>
+            </div>
+
+            {/* Sidebar */}
+<div className="lg:col-span-1">
+  <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-6 space-y-4">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-lg font-bold text-gray-900">Status & Priority</h2>
+      {!editing && (
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          Read-only
+        </span>
+      )}
+    </div>
+    
+    {["status", "severity", "priority", "result"].map((k) => (
+      <div key={k} className="pb-3 border-b border-gray-100 last:border-0">
+        <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+          {k}
+        </label>
+        {editing ? (
+          <select 
+            name={k} 
+            value={(formData as any)[k] ?? ""} 
+            onChange={handleChange} 
+            className="w-full border-2 border-indigo-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+          >
+            {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
+            {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
+            {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
+            {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold border ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
+              {(bug as any)[k] || "To-Do"}
+            </span>
+          </div>
+        )}
+      </div>
+    ))}
+    
+    {/* Comments */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                     <MessageSquare className="w-6 h-6 text-indigo-600" /> Comments ({comments.length})
@@ -701,32 +781,17 @@ useEffect(() => {
                     </div>
                   )) : <p className="text-center text-gray-400 py-12">No comments yet</p>}
                 </div>
-              </div>
-            </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-6 sticky top-6 space-y-5">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Status & Priority</h2>
-                {["status", "severity", "priority", "result"].map((k) => (
-                  <div key={k} className="mb-3">
-                    <label className="block text-sm font-bold text-gray-700 mb-2 capitalize">{k}</label>
-                    {editing ? (
-                      <select name={k} value={(formData as any)[k] ?? ""} onChange={handleChange} className="w-full border-2 border-indigo-200 rounded-xl p-3 font-medium">
-                        {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
-                    ) : (
-                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold border-2 ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
-                        {(bug as any)[k] || "To-Do"}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+    {/* Optional: Quick Actions */}
+    {editing && (
+      <div className="pt-4 mt-4 border-t border-gray-200">
+        <p className="text-xs text-gray-500 text-center">
+          💡 Changes will be saved when you click "Save Changes"
+        </p>
+      </div>
+    )}
+  </div>
+</div>
           </div>
         </div>
       </div>
