@@ -1,7 +1,7 @@
 // app/layout.tsx
 import './globals.css';
 import { ToastProvider } from "@/components/ui/use-toast";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
