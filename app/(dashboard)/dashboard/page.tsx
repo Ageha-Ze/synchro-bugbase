@@ -1,4 +1,4 @@
-�
+
 import BugTrendChart from "@/components/BugTrendChart"; import QuickActions from "@/components/QuickActions"; import { supabaseServer } from "@/lib/supabaseServer"; import Link from "next/link"; import { Bug as BugIcon, CheckCircle, Clock, TrendingUp } from "lucide-react"; import type { Bug } from "@/lib/bugs"; import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 type Project = {
 id: string;
