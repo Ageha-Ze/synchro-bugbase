@@ -92,9 +92,32 @@ export default function ProjectBugsClient({
 
   if (filterSeverity !== "all") result = result.filter((b) => b.severity === filterSeverity);
   if (filterStatus !== "all") result = result.filter((b) => b.status === filterStatus);
-  if (filterResult !== "all") result = result.filter((b) => b.result === filterResult); // ✅ TAMBAH INI
+  if (filterResult !== "all") result = result.filter((b) => b.result === filterResult);
 
-  // ... sorting code tetap sama
+  // ✅ GANTI BAGIAN SORTING INI
+  result.sort((a, b) => {
+    let aVal: string | number = a[sortField] ?? "";
+    let bVal: string | number = b[sortField] ?? "";
+
+    if (sortField === "created_at") {
+      aVal = aVal ? new Date(aVal as string).getTime() : 0;
+      bVal = bVal ? new Date(bVal as string).getTime() : 0;
+    }
+
+    // ✅ TAMBAHKAN INI - handling khusus untuk bug_number
+    if (sortField === "bug_number") {
+      aVal = Number(aVal) || 0;
+      bVal = Number(bVal) || 0;
+    }
+
+    if (typeof aVal === "string") aVal = aVal.toLowerCase();
+    if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
   setFilteredBugs(result);
 };
 
