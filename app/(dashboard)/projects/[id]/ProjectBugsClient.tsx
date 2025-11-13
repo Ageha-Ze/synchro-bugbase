@@ -406,7 +406,7 @@ export default function ProjectBugsClient({
         className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
       >
         <option value="all">All Status</option>
-        <option value="New">🆕 New</option>
+        <option value="New">🎯 New</option>
         <option value="Open">📂 Open</option>
         <option value="Blocked">🚫 Blocked</option>
         <option value="Fixed">✅ Fixed</option>
@@ -473,7 +473,7 @@ export default function ProjectBugsClient({
           {(() => {
             switch (bug.status) {
               case "New":
-                return "🆕New";
+                return "🎯New";
               case "Open":
                 return "📂Open";
               case "Blocked":
