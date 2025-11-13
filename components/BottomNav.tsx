@@ -20,10 +20,10 @@ export default function BottomNav() {
 
     if (error) {
       toast({
-        title: "Logout Gagal",
-        description: error.message,
-      });
-      return;
+  title: "Logout Gagal",
+  description: error.message,
+  variant: "destructive",
+});
     }
 
     toast({
