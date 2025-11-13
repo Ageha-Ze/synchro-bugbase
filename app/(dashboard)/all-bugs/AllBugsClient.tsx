@@ -290,7 +290,7 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
             <table className="w-full text-sm md:text-base min-w-[700px]">
               <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white border-b border-indigo-200 backdrop-blur-md">
                 <tr>
-                  {["Bug ID", "Project", "Status", "Title", "Priority", "Result", "Created", "Actions"].map((label) => (
+                  {["Bug ID", "Project", "Status", "Title", "Priority", "Result", "Created"].map((label) => (
                     <th
                       key={label}
                       className="px-4 md:px-6 py-3 text-left font-semibold text-indigo-800 uppercase text-xs md:text-sm tracking-wide"
@@ -305,84 +305,72 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
                 {filteredBugs.length > 0 ? (
                   filteredBugs.map((bug) => (
                     <tr
-                      key={bug.id}
-                      onClick={() => router.push(`/bug/${bug.id}`)}
-                      className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
-                    >
-                      <td className="px-4 md:px-6 py-4 font-mono text-gray-900 font-bold">
-                        {formatBugId(bug)}
-                      </td>
+        key={bug.id}
+        onClick={() => router.push(`/bug/${bug.id}`)}
+        className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
+      >
+        <td className="px-4 md:px-6 py-3 font-mono text-xs font-bold text-gray-900">
+          {formatBugId(bug)}
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                        {bug.project?.name || "Unknown"}
-                      </td>
+        <td className="px-4 md:px-6 py-3">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+            {bug.project?.name || "Unknown"}
+          </span>
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                        {(() => {
-                          switch (bug.status) {
-                            case "New": return "🆕New";
-                            case "Open": return "📂Open";
-                            case "Blocked": return "🚫Blocked";
-                            case "Fixed": return "✅Fixed";
-                            case "To Fix in Update": return "🧩TFU";
-                            case "Will Not Fix": return "🚷WNF";
-                            case "In Progress": return "⚙️In Progress";
-                            default: return bug.status;
-                          }
-                        })()}
-                      </td>
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.status) {
+              case "New": return "🆕New";
+              case "Open": return "📂Open";
+              case "Blocked": return "🚫Blocked";
+              case "Fixed": return "✅Fixed";
+              case "To Fix in Update": return "🧩TFU";
+              case "Will Not Fix": return "🚷WNF";
+              case "In Progress": return "⚙️In Progress";
+              default: return bug.status;
+            }
+          })()}
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 max-w-md">
-                        <p className="font-semibold text-gray-900 truncate">{bug.title}</p>
-                        <p className="text-xs text-gray-500 line-clamp-2">{bug.description}</p>
-                      </td>
+        <td className="px-4 md:px-6 py-3 max-w-md">
+          <p className="text-xs font-semibold text-gray-900 truncate">{bug.title}</p>
+          <p className="text-[10px] text-gray-500 line-clamp-2">{bug.description}</p>
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                        {(() => {
-                          switch (bug.priority) {
-                            case "Highest": return "🚨 Dire";
-                            case "High": return "⚠️ High";
-                            case "Medium": return "🟠 Mid";
-                            case "Low": return "🟢 Low";
-                            default: return bug.priority;
-                          }
-                        })()}
-                      </td>
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.priority) {
+              case "Highest": return "🚨 Dire";
+              case "High": return "⚠️ High";
+              case "Medium": return "🟠 Mid";
+              case "Low": return "🟢 Low";
+              default: return bug.priority;
+            }
+          })()}
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                        {(() => {
-                          switch (bug.result) {
-                            case "Confirmed": return "✅ Confirmed";
-                            case "Closed": return "🔒 Closed";
-                            case "Unresolved": return "⚠️ Unresolved";
-                            default: return "📝 To-Do";
-                          }
-                        })()}
-                      </td>
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.result) {
+              case "Confirmed": return "✅ Confirmed";
+              case "Closed": return "🔒 Closed";
+              case "Unresolved": return "⚠️ Unresolved";
+              default: return "📝 To-Do";
+            }
+          })()}
+        </td>
 
-                      <td className="px-4 md:px-6 py-4 text-slate-600">
-                        {bug.created_at
-                          ? new Date(bug.created_at).toLocaleDateString("id-ID", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : "-"}
-                      </td>
-
-                      <td className="px-4 md:px-6 py-4 text-right">
-                        <button
-                          onClick={(e) => handleDeleteBug(bug.id, e)}
-                          disabled={deletingId === bug.id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-xs md:text-sm transition-all disabled:opacity-50"
-                        >
-                          {deletingId === bug.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </td>
+        <td className="px-4 md:px-6 py-3 text-xs text-slate-600">
+          {bug.created_at
+            ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "-"}
+        </td>
                     </tr>
                   ))
                 ) : (
