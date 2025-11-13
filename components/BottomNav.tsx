@@ -48,8 +48,12 @@ return (
 
 {/* Label dan logo */}
 
-
-Synchro BugBase
+  <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-md border-t border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col items-center">
+      {/* Label dan logo */}
+      <div className="font-semibold text-sm py-1 text-indigo-600 dark:text-indigo-400">
+        Synchro BugBase
+      </div>
 
 {/* Tombol navigasi */}
     <div className="flex justify-around w-full pb-1">
