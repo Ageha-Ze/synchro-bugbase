@@ -1,3 +1,5 @@
+"use client";
+
 import { supabaseServer } from "@/lib/supabaseServer";
 import AllBugsClient from "./AllBugsClient";
 import type { Bug } from "@/lib/bugs";
