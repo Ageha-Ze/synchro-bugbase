@@ -1,92 +1,131 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabaseBrowser from "@/lib/supabaseBrowser";
-import { Bug, Project } from "@prisma/client";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import type { Bug } from "@/lib/bugs";
 import {
-  ArrowUpDown,
-  Eye,
-  FolderKanban,
-  LayoutDashboard,
-  FileDown,
-  AlertTriangle,
-  CheckCircle,
-  Circle,
+  Search,
+  Trash2,
+  Loader2,
+  Bug as BugIcon,
+  Download,
 } from "lucide-react";
+import supabaseBrowser from "@/lib/supabaseBrowser";
+import { useToast } from "@/components/ui/use-toast";
+import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 
-type BugWithProject = Bug & { project: Project | null };
+type BugWithProject = Bug & {
+  project: {
+    id: string;
+    name: string;
+    project_number: number | null;
+  } | null;
+};
 
-export default function AllBugsClient() {
-  const supabase = supabaseBrowser();
+interface AllBugsClientProps {
+  initialBugs: BugWithProject[];
+}
+
+export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
   const router = useRouter();
+  const supabase = supabaseBrowser;
   const { toast } = useToast();
 
-  const [bugs, setBugs] = useState<BugWithProject[]>([]);
-  const [sortField, setSortField] = useState<keyof BugWithProject>("created_at");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [bugs, setBugs] = useState<BugWithProject[]>(initialBugs);
+  const [filteredBugs, setFilteredBugs] = useState<BugWithProject[]>(initialBugs);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterProject, setFilterProject] = useState("all");
+  const [filterSeverity, setFilterSeverity] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterResult, setFilterResult] = useState("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // 🔹 Ambil data bug dari Supabase
+  // Get unique projects for filter
+  const projects = Array.from(
+    new Map(bugs.map((b) => [b.project?.id, b.project])).values()
+  ).filter(Boolean);
+
   useEffect(() => {
-    const fetchBugs = async () => {
-      const { data, error } = await supabase.from("bugs").select("*, project(*)");
+    filterBugs();
+  }, [bugs, searchQuery, filterProject, filterSeverity, filterStatus, filterResult]);
 
-      if (error) {
-        toast({
-          title: "Gagal memuat data bug",
-          description: error.message,
-          type: "error",
-        });
-      } else {
-        setBugs(data as BugWithProject[]);
-      }
-    };
-    fetchBugs();
-  }, [supabase, toast]);
+  const filterBugs = () => {
+  let result = [...bugs];
+  
+  console.log("🔍 Filtering bugs, total:", bugs.length);
+  console.log("📊 Search query:", searchQuery);
+  console.log("📊 Filter project:", filterProject);
 
-  // 🔹 Urutkan data
-  const sortedBugs = useMemo(() => {
-    return [...bugs].sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [bugs, sortField, sortDirection]);
-
-  const handleSort = (field: keyof BugWithProject) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const SortIcon = ({ field }: { field: keyof BugWithProject }) => {
-    if (sortField !== field)
-      return <ArrowUpDown className="inline w-4 h-4 ml-1 opacity-30" />;
-    return (
-      <ArrowUpDown
-        className={`inline w-4 h-4 ml-1 transition-transform ${
-          sortDirection === "asc" ? "rotate-180" : ""
-        }`}
-      />
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase().trim();
+    result = result.filter(
+      (bug) =>
+        bug.title?.toLowerCase().includes(q) ||
+        bug.description?.toLowerCase().includes(q) ||
+        bug.project?.name?.toLowerCase().includes(q)
     );
-  };
+  }
 
-  // 🔹 Format kode bug (misal SCB-01-002)
+  if (filterProject !== "all") {
+    result = result.filter((b) => b.project?.id === filterProject);
+  }
+  if (filterSeverity !== "all") {
+    result = result.filter((b) => b.severity === filterSeverity);
+  }
+  if (filterStatus !== "all") {
+    result = result.filter((b) => b.status === filterStatus);
+  }
+  if (filterResult !== "all") {
+    result = result.filter((b) => b.result === filterResult);
+  }
+
+  console.log("✅ Filtered bugs:", result.length);
+  setFilteredBugs(result);
+};
+
   const formatBugId = (bug: BugWithProject) => {
     const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
     const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
     return `SCB-${projectNum}-${bugNum}`;
   };
 
-  // 🔹 Ekspor CSV
+  const getSeverityStyle = (severity?: string | null) => {
+    switch (severity) {
+      case "Crash/Undoable":
+        return "bg-red-700 text-white";
+      case "High":
+        return "bg-orange-300 text-black";
+      case "Medium":
+        return "bg-yellow-300 text-black";
+      case "Low":
+        return "bg-green-300 text-black";
+      case "Suggestion":
+        return "bg-sky-300 text-black";
+      default:
+        return "bg-white text-gray-900";
+    }
+  };
+
+  const handleDeleteBug = async (bugId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this bug?")) return;
+    
+    setDeletingId(bugId);
+    try {
+      const { error } = await supabase.from("bugs").delete().eq("id", bugId);
+      if (error) throw error;
+      
+      setBugs(bugs.filter((b) => b.id !== bugId));
+      toast({ title: "Bug deleted 🗑️", description: "Bug has been removed." });
+    } catch (error: any) {
+      console.error("Error deleting bug:", error);
+      alert("Failed to delete bug: " + error.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleExportCSV = () => {
     const headers = [
       "Bug ID",
@@ -97,155 +136,271 @@ export default function AllBugsClient() {
       "Priority",
       "Status",
       "Result",
-      "Steps to Reproduce",
-      "Expected Result",
-      "Actual Result",
       "Created At",
     ];
 
-    const rows = bugs.map((bug) => {
-      const bugId = formatBugId(bug);
-      return [
-        bugId,
-        bug.project?.name || "No Project",
-        bug.title || "",
-        bug.description || "",
-        bug.severity || "",
-        bug.priority || "",
-        bug.status || "",
-        bug.result || "",
-        bug.steps_to_reproduce || "",
-        bug.expected_result || "",
-        bug.actual_result || "",
-        bug.created_at ? new Date(bug.created_at).toLocaleString() : "",
-      ];
-    });
+    const rows = filteredBugs.map((bug) => [
+      formatBugId(bug),
+      bug.project?.name || "",
+      bug.title || "",
+      bug.description || "",
+      bug.severity || "",
+      bug.priority || "",
+      bug.status || "",
+      bug.result || "",
+      bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "",
+    ].map((cell) => `"${String(cell).replace(/"/g, '""')}"`));
 
-    const csvContent = [headers, ...rows]
-      .map((e) => e.map((v) => `"${v}"`).join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "bugs_export.csv";
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `all_bugs_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "CSV Exported! 📥",
+      description: `${filteredBugs.length} bugs exported successfully.`,
+    });
   };
 
-  // 🔹 UI
   return (
-    <div className="p-4 space-y-6">
-      {/* Header */}
-      <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-6 md:p-8 text-white overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24" />
+    <ClientConnectionHandler>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+          {/* Header */}
+          <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-6 md:p-8 text-white overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24"></div>
 
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <LayoutDashboard className="w-7 h-7" /> All Bugs
-            </h1>
-            <p className="text-sm text-white/80 mt-1">
-              Daftar semua laporan bug di proyek Anda
-            </p>
+            <div className="relative z-10 space-y-4">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div className="space-y-2">
+                  <h1 className="text-2xl md:text-4xl font-bold leading-tight drop-shadow-sm flex items-center gap-3">
+                    <BugIcon className="w-8 h-8" />
+                    All Bugs
+                  </h1>
+                  <p className="text-indigo-100 text-sm md:text-lg">
+                    View and manage bugs from all projects
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleExportCSV}
+                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm text-sm md:text-base"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <div className="bg-white/20 rounded-xl px-4 py-2 border border-white/30 text-sm">
+                  <span className="opacity-80">Total Bugs:</span>{" "}
+                  <span className="font-bold">{bugs.length}</span>
+                </div>
+                <div className="bg-white/20 rounded-xl px-4 py-2 border border-white/30 text-sm">
+                  <span className="opacity-80">Showing:</span>{" "}
+                  <span className="font-bold">{filteredBugs.length}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm transition"
-          >
-            <FileDown className="w-4 h-4" /> Export CSV
-          </button>
+          {/* Search & Filters */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 p-4 md:p-6">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 flex-wrap">
+              {/* Search */}
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
+                <input
+                  type="text"
+                  placeholder="Search bugs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 placeholder:text-indigo-300 text-sm md:text-base transition-all"
+                />
+              </div>
+
+              {/* Filters */}
+              <div className="flex gap-3 flex-wrap flex-1">
+                <select
+                  value={filterProject}
+                  onChange={(e) => setFilterProject(e.target.value)}
+                  className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+                >
+                  <option value="all">All Projects</option>
+                  {projects.map((project) => (
+                    <option key={project!.id} value={project!.id}>
+                      {project!.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterSeverity}
+                  onChange={(e) => setFilterSeverity(e.target.value)}
+                  className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+                >
+                  <option value="all">All Severities</option>
+                  <option value="Crash/Undoable">💥 Crash/Undoable</option>
+                  <option value="High">🔥 High</option>
+                  <option value="Medium">🟡 Medium</option>
+                  <option value="Low">🟢 Low</option>
+                  <option value="Suggestion">💡 Suggestion</option>
+                </select>
+
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+                >
+                  <option value="all">All Status</option>
+                  <option value="New">🆕 New</option>
+                  <option value="Open">📂 Open</option>
+                  <option value="Blocked">🚫 Blocked</option>
+                  <option value="Fixed">✅ Fixed</option>
+                  <option value="To Fix in Update">🧩 TFU</option>
+                  <option value="Will Not Fix">🚷 WNF</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                </select>
+
+                <select
+                  value={filterResult}
+                  onChange={(e) => setFilterResult(e.target.value)}
+                  className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+                >
+                  <option value="all">All Results</option>
+                  <option value="Confirmed">✅ Confirmed</option>
+                  <option value="Closed">🔒 Closed</option>
+                  <option value="Unresolved">⚠️ Unresolved</option>
+                  <option value="To-Do">📝 To-Do</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 overflow-x-auto">
+            <table className="w-full text-sm md:text-base min-w-[700px]">
+              <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white border-b border-indigo-200 backdrop-blur-md">
+                <tr>
+                  {["Bug ID", "Project", "Status", "Title", "Priority", "Result", "Created", "Actions"].map((label) => (
+                    <th
+                      key={label}
+                      className="px-4 md:px-6 py-3 text-left font-semibold text-indigo-800 uppercase text-xs md:text-sm tracking-wide"
+                    >
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-indigo-100">
+                {filteredBugs.length > 0 ? (
+                  filteredBugs.map((bug) => (
+                    <tr
+                      key={bug.id}
+                      onClick={() => router.push(`/bug/${bug.id}`)}
+                      className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
+                    >
+                      <td className="px-4 md:px-6 py-4 font-mono text-gray-900 font-bold">
+                        {formatBugId(bug)}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                        {bug.project?.name || "Unknown"}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                        {(() => {
+                          switch (bug.status) {
+                            case "New": return "🆕New";
+                            case "Open": return "📂Open";
+                            case "Blocked": return "🚫Blocked";
+                            case "Fixed": return "✅Fixed";
+                            case "To Fix in Update": return "🧩TFU";
+                            case "Will Not Fix": return "🚷WNF";
+                            case "In Progress": return "⚙️In Progress";
+                            default: return bug.status;
+                          }
+                        })()}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 max-w-md">
+                        <p className="font-semibold text-gray-900 truncate">{bug.title}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2">{bug.description}</p>
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                        {(() => {
+                          switch (bug.priority) {
+                            case "Highest": return "🚨 Dire";
+                            case "High": return "⚠️ High";
+                            case "Medium": return "🟠 Mid";
+                            case "Low": return "🟢 Low";
+                            default: return bug.priority;
+                          }
+                        })()}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
+                        {(() => {
+                          switch (bug.result) {
+                            case "Confirmed": return "✅ Confirmed";
+                            case "Closed": return "🔒 Closed";
+                            case "Unresolved": return "⚠️ Unresolved";
+                            default: return "📝 To-Do";
+                          }
+                        })()}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 text-slate-600">
+                        {bug.created_at
+                          ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "-"}
+                      </td>
+
+                      <td className="px-4 md:px-6 py-4 text-right">
+                        <button
+                          onClick={(e) => handleDeleteBug(bug.id, e)}
+                          disabled={deletingId === bug.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-xs md:text-sm transition-all disabled:opacity-50"
+                        >
+                          {deletingId === bug.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-16 text-center">
+                      <div className="text-gray-400">
+                        <BugIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg font-bold text-gray-900">No bugs found</p>
+                        <p className="text-sm text-gray-500">Try adjusting your filters</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-
-      {/* Tabel Bugs */}
-      <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr className="text-gray-700 dark:text-gray-200">
-              <th className="p-3">ID</th>
-              <th className="p-3 cursor-pointer" onClick={() => handleSort("title")}>
-                Judul <SortIcon field="title" />
-              </th>
-              <th className="p-3">Project</th>
-              <th className="p-3">Severity</th>
-              <th className="p-3">Priority</th>
-              <th className="p-3 cursor-pointer" onClick={() => handleSort("status")}>
-                Status <SortIcon field="status" />
-              </th>
-              <th className="p-3 cursor-pointer" onClick={() => handleSort("created_at")}>
-                Dibuat <SortIcon field="created_at" />
-              </th>
-              <th className="p-3 text-right">Aksi</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {sortedBugs.map((bug) => (
-              <tr
-                key={bug.id}
-                className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <td className="p-3 font-mono text-xs text-gray-500">{formatBugId(bug)}</td>
-                <td className="p-3 font-medium flex items-center gap-2">
-                  <Bug className="w-4 h-4 text-indigo-500" /> {bug.title}
-                </td>
-                <td className="p-3 flex items-center gap-2">
-                  <FolderKanban className="w-4 h-4 text-gray-500" />
-                  {bug.project?.name ?? "-"}
-                </td>
-                <td className="p-3">
-                  {bug.severity === "high" ? (
-                    <AlertTriangle className="w-4 h-4 text-red-600" />
-                  ) : bug.severity === "medium" ? (
-                    <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-green-500" />
-                  )}
-                </td>
-                <td className="p-3">{bug.priority ?? "-"}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                      bug.status === "open"
-                        ? "bg-red-100 text-red-700"
-                        : bug.status === "in_progress"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {bug.status === "open" ? (
-                      <Circle className="w-3 h-3" />
-                    ) : bug.status === "in_progress" ? (
-                      <AlertTriangle className="w-3 h-3" />
-                    ) : (
-                      <CheckCircle className="w-3 h-3" />
-                    )}
-                    {bug.status}
-                  </span>
-                </td>
-                <td className="p-3">{new Date(bug.created_at).toLocaleDateString()}</td>
-                <td className="p-3 text-right">
-                  <button
-                    onClick={() => router.push(`/bug/${bug.id}`)}
-                    className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
-                  >
-                    <Eye className="w-4 h-4" /> Detail
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {sortedBugs.length === 0 && (
-              <tr>
-                <td colSpan={8} className="p-5 text-center text-gray-400">
-                  Belum ada bug yang tercatat.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </ClientConnectionHandler>
   );
 }
