@@ -188,13 +188,13 @@ toast({
 });
 };
 const SortIcon = ({ field }: { field: keyof BugWithProject }) => {
-if (sortField !== field)
-return ;
-return sortDirection === "asc" ? (
+  if (sortField !== field) return null; // Tidak aktif: jangan tampilkan apa pun
 
-) : (
-
-);
+  return sortDirection === "asc" ? (
+    <ArrowUp className="w-3 h-3 inline ml-1 text-gray-500" />
+  ) : (
+    <ArrowDown className="w-3 h-3 inline ml-1 text-gray-500" />
+  );
 };
 return (
 
