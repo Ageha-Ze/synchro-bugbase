@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, FolderKanban } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderKanban, Bug } from "lucide-react";
 import Link from "next/link";
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useState, useEffect } from "react";
@@ -80,6 +80,11 @@ export default function Sidebar() {
             <FolderKanban className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
             <span className="ml-1.5 truncate">Projects</span>
           </Link>
+
+          <Link href="/all-bugs" className={`${linkClass("/all-bugs")} group`}>
+  <Bug className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+  <span className="ml-1.5 truncate">Bugs</span>
+</Link>
         </div>
 
         {/* Logout */}
