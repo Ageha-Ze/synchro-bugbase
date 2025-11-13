@@ -417,48 +417,50 @@ useEffect(() => {
               )}
 
               {/* Header */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <Button
-                    onClick={() => {
-                      router.replace(`/projects/${projectId}`);
-                      router.refresh();
-                    }}
-                    className="bg-white hover:bg-indigo-50 text-indigo-600 border-2 border-indigo-200"
-                    size="sm"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
-                  </Button>
-                  <div className="flex gap-2">
-                    {editing && (
-                      <Button
-                        onClick={() => {
-                          setEditing(false);
-                          setFormData(bug);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="w-4 h-4 mr-2" />Cancel
-                      </Button>
-                    )}
-                    <Button
-                      onClick={editing ? handleSave : () => setEditing(true)}
-                      size="sm"
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : editing ? (
-                        <Save className="w-4 h-4 mr-2" />
-                      ) : (
-                        <Edit2 className="w-4 h-4 mr-2" />
-                      )}
-                      {editing ? "Save Changes" : "Edit Bug"}
-                    </Button>
-                  </div>
-                </div>
+<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8">
+  <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+    <Button
+      onClick={() => {
+        router.replace(`/projects/${projectId}`);
+        router.refresh();
+      }}
+      className="bg-white hover:bg-indigo-50 text-indigo-600 border-2 border-indigo-200 w-full sm:w-auto"
+      size="sm"
+    >
+      <ArrowLeft className="w-4 h-4 mr-2" /> Back
+    </Button>
+    
+    <div className="flex gap-2 w-full sm:w-auto">
+      {editing && (
+        <Button
+          onClick={() => {
+            setEditing(false);
+            setFormData(bug);
+          }}
+          variant="outline"
+          size="sm"
+          className="flex-1 sm:flex-none"
+        >
+          <X className="w-4 h-4 mr-2" />Cancel
+        </Button>
+      )}
+      <Button
+        onClick={editing ? handleSave : () => setEditing(true)}
+        size="sm"
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg flex-1 sm:flex-none"
+        disabled={saving}
+      >
+        {saving ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : editing ? (
+          <Save className="w-4 h-4 mr-2" />
+        ) : (
+          <Edit2 className="w-4 h-4 mr-2" />
+        )}
+        {editing ? "Save Changes" : "Edit Bug"}
+      </Button>
+    </div>
+  </div>
 
                 {/* Title & Description */}
                 {editing ? (
@@ -481,7 +483,7 @@ useEffect(() => {
                   </div>
                 ) : (
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-xl font-bold text-gray-900">
                       {bug.bug_number ? (
                         <span className="text-indigo-600">
                           SCB-{bug.project_number ?? "01"}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
@@ -754,7 +756,7 @@ useEffect(() => {
         )}
       </div>
     ))}
-    
+
     {/* Comments */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border p-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
