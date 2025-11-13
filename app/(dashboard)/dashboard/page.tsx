@@ -1,118 +1,91 @@
-import BugTrendChart from "@/components/BugTrendChart";
-import QuickActions from "@/components/QuickActions";
-import { supabaseServer } from "@/lib/supabaseServer";
-import Link from "next/link";
-import { Bug as BugIcon, CheckCircle, Clock, TrendingUp } from "lucide-react";
-import type { Bug } from "@/lib/bugs";
-import ClientConnectionHandler from "@/components/ClientConnectionHandler";
-
+�
+import BugTrendChart from "@/components/BugTrendChart"; import QuickActions from "@/components/QuickActions"; import { supabaseServer } from "@/lib/supabaseServer"; import Link from "next/link"; import { Bug as BugIcon, CheckCircle, Clock, TrendingUp } from "lucide-react"; import type { Bug } from "@/lib/bugs"; import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 type Project = {
-  id: string;
-  name: string;
-  project_number: string | number | null;
+id: string;
+name: string;
+project_number: string | number | null;
 };
-
 type RecentBugWithProject = Bug & {
-  project: Project | null;
+project: Project | null;
 };
-
 export default async function DashboardPage() {
-  const supabase = await supabaseServer();
-
-  const { count: projectCount } = await supabase
-    .from("projects")
-    .select("*", { count: "exact", head: true });
-
-  const { count: bugCount } = await supabase
-    .from("bugs")
-    .select("*", { count: "exact", head: true });
-
-  const { count: openCount } = await supabase
-    .from("bugs")
-    .select("*", { count: "exact", head: true })
-    .in("status", ["New", "Open", "Blocked"]);
-
-  const { count: closedCount } = await supabase
-    .from("bugs")
-    .select("*", { count: "exact", head: true })
-    .in("result", ["Confirmed", "Closed"]);
-
-  const { data: bugsData } = await supabase
-    .from("bugs")
-    .select("*")
-    .order("bug_number", { ascending: false })
-    .limit(5);
-
-  const recentBugs: RecentBugWithProject[] = (bugsData || []).map((bug) => ({
-    ...bug,
-    project: null,
-  }));
-
-  const projectIds = Array.from(new Set(recentBugs.map((b) => b.project_id)));
-
-  const { data: projectsData } = await supabase
-    .from("projects")
-    .select("id, name, project_number")
-    .in("id", projectIds);
-
-  const mappedBugs: RecentBugWithProject[] = recentBugs.map((bug) => ({
-    ...bug,
-    project: projectsData?.find((p) => p.id === bug.project_id) ?? null,
-  }));
-
-  const { data: severityStats } = await supabase
-    .from("bugs")
-    .select("severity")
-    .in("status", ["New", "Open", "Blocked"]);
-
-  const severityCounts = (severityStats || []).reduce(
-    (acc: Record<string, number>, bug: { severity: string | null }) => {
-      const key = bug.severity ?? "Unknown";
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const stats = {
-    projects: projectCount ?? 0,
-    totalBugs: bugCount ?? 0,
-    openBugs: openCount ?? 0,
-    closedBugs: closedCount ?? 0,
-  };
-
-  const getSeverityColor = (severity: string) => {
-    const colors: Record<string, string> = {
-      "Crash/Undoable": "from-red-400 to-red-500",
-      High: "from-orange-400 to-orange-500",
-      Medium: "from-yellow-300 to-yellow-400",
-      Low: "from-green-400 to-green-500",
-      Suggestion: "from-blue-400 to-blue-500",
-    };
-    return colors[severity] || "from-gray-400 to-gray-500";
-  };
-
-  const getSeverityBadge = (severity: string | null) => {
-    const badges: Record<string, string> = {
-      "Crash/Undoable": "bg-red-100 text-red-700 border-red-200",
-      High: "bg-orange-100 text-orange-700 border-orange-200",
-      Medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      Low: "bg-green-100 text-green-700 border-green-200",
-      Suggestion: "bg-blue-100 text-blue-700 border-blue-200",
-    };
-    return badges[severity ?? ""] || "bg-gray-100 text-gray-600 border-gray-200";
-  };
-
-  const getStatusBadge = (status: string | null) => {
-    const badges: Record<string, string> = {
-      New: "bg-blue-100 text-blue-700",
-      Open: "bg-yellow-100 text-yellow-700",
-      Blocked: "bg-red-100 text-red-700",
-      Confirmed: "bg-green-100 text-green-700",
-      Closed: "bg-gray-100 text-gray-600",
-    };
-    return badges[status ?? ""] || "bg-gray-100 text-gray-600";
-  };
+const supabase = await supabaseServer();
+// ✅ Query projects dengan count yang benar
+const { data: projectsData, count: projectCount } = await supabase
+.from("projects")
+.select("id, name, project_number", { count: "exact" });
+const { count: bugCount } = await supabase
+.from("bugs")
+.select("*", { count: "exact", head: true });
+const { count: openCount } = await supabase
+.from("bugs")
+.select("*", { count: "exact", head: true })
+.in("status", ["New", "Open", "Blocked"]);
+const { count: closedCount } = await supabase
+.from("bugs")
+.select("*", { count: "exact", head: true })
+.in("result", ["Confirmed", "Closed"]);
+// ✅ Ambil bugs recent dengan join langsung ke projects
+const { data: bugsData } = await supabase
+.from("bugs")
+.select("*")
+.order("created_at", { ascending: false }) // Urutkan berdasarkan created_at, bukan bug_number
+.limit(5);
+// ✅ Map bugs dengan project data
+const mappedBugs: RecentBugWithProject[] = (bugsData || []).map((bug) => ({
+...bug,
+project: projectsData?.find((p) => p.id === bug.project_id) ?? null,
+}));
+const { data: severityStats } = await supabase
+.from("bugs")
+.select("severity")
+.in("status", ["New", "Open", "Blocked"]);
+const severityCounts = (severityStats || []).reduce(
+(acc: Record<string, number>, bug: { severity: string | null }) => {
+const key = bug.severity ?? "Unknown";
+acc[key] = (acc[key] || 0) + 1;
+return acc;
+},
+{} as Record<string, number>
+);
+const stats = {
+projects: projectCount ?? 0,
+totalBugs: bugCount ?? 0,
+openBugs: openCount ?? 0,
+closedBugs: closedCount ?? 0,
+};
+const getSeverityColor = (severity: string) => {
+const colors: Record<string, string> = {
+"Crash/Undoable": "from-red-400 to-red-500",
+High: "from-orange-400 to-orange-500",
+Medium: "from-yellow-300 to-yellow-400",
+Low: "from-green-400 to-green-500",
+Suggestion: "from-blue-400 to-blue-500",
+};
+return colors[severity] || "from-gray-400 to-gray-500";
+};
+const getSeverityBadge = (severity: string | null) => {
+const badges: Record<string, string> = {
+"Crash/Undoable": "bg-red-100 text-red-700 border-red-200",
+High: "bg-orange-100 text-orange-700 border-orange-200",
+Medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+Low: "bg-green-100 text-green-700 border-green-200",
+Suggestion: "bg-blue-100 text-blue-700 border-blue-200",
+};
+return badges[severity ?? ""] || "bg-gray-100 text-gray-600 border-gray-200";
+};
+const getStatusBadge = (status: string | null) => {
+const badges: Record<string, string> = {
+New: "bg-blue-100 text-blue-700",
+Open: "bg-yellow-100 text-yellow-700",
+Blocked: "bg-red-100 text-red-700",
+Confirmed: "bg-green-100 text-green-700",
+Closed: "bg-gray-100 text-gray-600",
+Fixed: "bg-green-100 text-green-700",
+"In Progress": "bg-blue-100 text-blue-700",
+};
+return badges[status ?? ""] || "bg-gray-100 text-gray-600";
+};
 
   return (
     <ClientConnectionHandler>
