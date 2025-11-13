@@ -228,6 +228,11 @@ export default async function DashboardPage() {
         const severityStyle =
           severityColors[bug.severity ?? ""] || "bg-gray-100 text-gray-800 border-gray-200";
 
+        // ✅ TAMBAHKAN FORMAT BUG ID
+        const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
+        const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
+        const bugId = `SCB-${projectNum}-${bugNum}`;
+
         return (
           <Link
             key={bug.id}
@@ -236,12 +241,21 @@ export default async function DashboardPage() {
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <span className="text-xs opacity-80 truncate block mb-1">
-                  {bug.project?.name ?? "Unknown Project"}
-                </span>
+                {/* ✅ TAMPILKAN BUG ID */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono font-bold opacity-90">
+                    {bugId}
+                  </span>
+                  <span className="text-xs opacity-60">•</span>
+                  <span className="text-xs opacity-80 truncate">
+                    {bug.project?.name ?? "Unknown Project"}
+                  </span>
+                </div>
+                
                 <h3 className="font-semibold truncate group-hover:underline">
                   {bug.title}
                 </h3>
+                
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityBadge(
@@ -258,6 +272,7 @@ export default async function DashboardPage() {
                     {bug.status ?? "Unknown"}
                   </span>
                 </div>
+                
                 <p className="text-xs mt-2 flex items-center gap-1 opacity-70">
                   <Clock className="w-3 h-3" />
                   {bug.created_at
