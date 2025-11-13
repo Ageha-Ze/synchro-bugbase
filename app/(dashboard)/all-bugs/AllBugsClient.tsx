@@ -261,7 +261,7 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
                   className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
                 >
                   <option value="all">All Status</option>
-                  <option value="New">🆕 New</option>
+                  <option value="New">🎯 New</option>
                   <option value="Open">📂 Open</option>
                   <option value="Blocked">🚫 Blocked</option>
                   <option value="Fixed">✅ Fixed</option>
@@ -322,7 +322,7 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
         <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
           {(() => {
             switch (bug.status) {
-              case "New": return "🆕New";
+              case "New": return <span className="flex items-center gap-1"><span className="animate-pulse">🎯</span>New</span>;
               case "Open": return "📂Open";
               case "Blocked": return "🚫Blocked";
               case "Fixed": return "✅Fixed";
