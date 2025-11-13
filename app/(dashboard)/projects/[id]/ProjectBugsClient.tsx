@@ -50,6 +50,7 @@ export default function ProjectBugsClient({
   const [sortField, setSortField] = useState<keyof Bug>("bug_number");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [filterResult, setFilterResult] = useState("all");
 
   function getSeverityStyle(severity?: string | null) {
   switch (severity) {
@@ -69,48 +70,33 @@ export default function ProjectBugsClient({
 };
 
   useEffect(() => {
-    filterAndSortBugs();
-  }, [bugs, searchQuery, filterSeverity, filterStatus, sortField, sortDirection]);
+  filterAndSortBugs();
+}, [bugs, searchQuery, filterSeverity, filterStatus, filterResult, sortField, sortDirection]);
 
   const filterAndSortBugs = () => {
-    let result = [...bugs];
+  let result = [...bugs];
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((bug) => {
-        const bugId = `${bug.project_id}-${String(bug.bug_number).padStart(3, "0")}`.toLowerCase();
-        return (
-          bug.title?.toLowerCase().includes(q) ||
-          bug.description?.toLowerCase().includes(q) ||
-          bug.status?.toLowerCase().includes(q) ||
-          bug.result?.toLowerCase().includes(q) ||
-          bugId.includes(q)
-        );
-      });
-    }
-
-    if (filterSeverity !== "all") result = result.filter((b) => b.severity === filterSeverity);
-    if (filterStatus !== "all") result = result.filter((b) => b.status === filterStatus);
-
-    result.sort((a, b) => {
-      let aVal: string | number = a[sortField] ?? "";
-      let bVal: string | number = b[sortField] ?? "";
-
-      if (sortField === "created_at") {
-        aVal = aVal ? new Date(aVal as string).getTime() : 0;
-        bVal = bVal ? new Date(bVal as string).getTime() : 0;
-      }
-
-      if (typeof aVal === "string") aVal = aVal.toLowerCase();
-      if (typeof bVal === "string") bVal = bVal.toLowerCase();
-
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase().trim();
+    result = result.filter((bug) => {
+      const bugId = `${bug.project_id}-${String(bug.bug_number).padStart(3, "0")}`.toLowerCase();
+      return (
+        bug.title?.toLowerCase().includes(q) ||
+        bug.description?.toLowerCase().includes(q) ||
+        bug.status?.toLowerCase().includes(q) ||
+        bug.result?.toLowerCase().includes(q) ||
+        bugId.includes(q)
+      );
     });
+  }
 
-    setFilteredBugs(result);
-  };
+  if (filterSeverity !== "all") result = result.filter((b) => b.severity === filterSeverity);
+  if (filterStatus !== "all") result = result.filter((b) => b.status === filterStatus);
+  if (filterResult !== "all") result = result.filter((b) => b.result === filterResult); // ✅ TAMBAH INI
+
+  // ... sorting code tetap sama
+  setFilteredBugs(result);
+};
 
   const formatBugId = (bug: Bug) => {
     const projectNum = String(projectNumber ?? 1).padStart(2, "0"); // fallback ke 1
@@ -296,8 +282,8 @@ export default function ProjectBugsClient({
         {/* Search & Filter responsive */}
 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 p-4 md:p-6 overflow-x-auto">
   <div className="flex flex-col md:flex-row gap-3 md:gap-4 flex-wrap">
-    {/* Search */}
-    <div className="flex-1 relative min-w-[200px]">
+    {/* Search - dikurangi lebar */}
+    <div className="relative w-full md:w-64">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
       <input
         type="text"
@@ -308,12 +294,12 @@ export default function ProjectBugsClient({
       />
     </div>
 
-    {/* Filters */}
-    <div className="flex gap-3 flex-wrap md:flex-nowrap min-w-[180px]">
+    {/* Filters - 3 filter sekarang */}
+    <div className="flex gap-3 flex-wrap flex-1">
       <select
         value={filterSeverity}
         onChange={(e) => setFilterSeverity(e.target.value)}
-        className="flex-1 px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+        className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
       >
         <option value="all">All Severities</option>
         <option value="Crash/Undoable">💥 Crash/Undoable</option>
@@ -326,7 +312,7 @@ export default function ProjectBugsClient({
       <select
         value={filterStatus}
         onChange={(e) => setFilterStatus(e.target.value)}
-        className="flex-1 px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+        className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
       >
         <option value="all">All Status</option>
         <option value="New">🆕 New</option>
@@ -336,6 +322,18 @@ export default function ProjectBugsClient({
         <option value="To Fix in Update">🧩 TFU</option>
         <option value="Will Not Fix">🚷 WNF</option>
         <option value="In Progress">⚙️ In Progress</option>
+      </select>
+
+      <select
+        value={filterResult}
+        onChange={(e) => setFilterResult(e.target.value)}
+        className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 rounded-lg bg-indigo-50/50 text-slate-700 focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+      >
+        <option value="all">All Results</option>
+        <option value="Confirmed">✅ Confirmed</option>
+        <option value="Closed">🔒 Closed</option>
+        <option value="Unresolved">⚠️ Unresolved</option>
+        <option value="To-Do">📝 To-Do</option>
       </select>
     </div>
   </div>
@@ -349,10 +347,9 @@ export default function ProjectBugsClient({
       <tr>
         {[
           "Bug ID",
-          "Severity",
+          "Status",
           "Title & Location",
           "Priority",
-          "Status",
           "Result",
           "Created",
           "Actions",
@@ -380,22 +377,26 @@ export default function ProjectBugsClient({
                       {formatBugId(bug)}
                     </td>
 
-                    {/* Severity */}
+                    {/* Status */}
                     <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
                       {(() => {
-                        switch (bug.severity) {
-                          case "Crash/Undoable":
-                            return "💥 Crash";
-                          case "High":
-                            return "🔥 High";
-                          case "Medium":
-                            return "🟡 Medium";
-                          case "Low":
-                            return "🟢 Low";
-                          case "Suggestion":
-                            return "💡 Suggestion";
+                        switch (bug.status) {
+                          case "New":
+                            return "🆕New";
+                          case "Open":
+                            return "📂Open";
+                          case "Blocked":
+                            return "🚫Blcoked";
+                          case "Fixed":
+                            return "✅Fixed";
+                          case "To Fix in Update":
+                            return "🧩TFU";
+                          case "Will Not Fix":
+                            return "🚷WNF";
+                          case "In Progress":
+                            return "⚙️In Progress";
                           default:
-                            return bug.severity;
+                            return bug.status;
                         }
                       })()}
                     </td>
@@ -424,30 +425,6 @@ export default function ProjectBugsClient({
                             return "🟢 Low";
                           default:
                             return bug.priority;
-                        }
-                      })()}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                      {(() => {
-                        switch (bug.status) {
-                          case "New":
-                            return "🆕 New";
-                          case "Open":
-                            return "📂 Open";
-                          case "Blocked":
-                            return "🚫 Blocked";
-                          case "Fixed":
-                            return "✅ Fixed";
-                          case "To Fix in Update":
-                            return "🧩 TFU";
-                          case "Will Not Fix":
-                            return "🚷 WNF";
-                          case "In Progress":
-                            return "⚙️ In Progress";
-                          default:
-                            return bug.status;
                         }
                       })()}
                     </td>
