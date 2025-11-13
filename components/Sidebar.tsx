@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, FolderKanban, Bug } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderKanban, Bug, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+
 
 export default function Sidebar() {
   const path = usePathname();
@@ -51,6 +52,9 @@ export default function Sidebar() {
   useEffect(() => {
     router.prefetch("/dashboard");
     router.prefetch("/projects");
+    router.prefetch("/all-bugs"); // ✅ Tambah ini
+    router.prefetch("/reports"); // ✅ Tambah ini
+
   }, [router]);
 
   return (
@@ -86,6 +90,11 @@ export default function Sidebar() {
   <span className="ml-1.5 truncate">Bugs</span>
 </Link>
         </div>
+
+        <Link href="/reports" className={`${linkClass("/reports")} group`}>
+  <BarChart3 className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+  <span className="ml-1.5 truncate">Reports</span>
+</Link>
 
         {/* Logout */}
         <button
