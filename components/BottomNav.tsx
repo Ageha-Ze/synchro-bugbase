@@ -20,10 +20,11 @@ export default function BottomNav() {
 
     if (error) {
       toast({
-  title: "Logout Gagal",
-  description: error.message,
-  type: "error",
-});
+        title: "Logout Gagal",
+        description: error.message,
+        type: "error",
+      });
+      return; // supaya tidak lanjut ke toast sukses
     }
 
     toast({
@@ -48,12 +49,10 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-md border-t border-gray-200 dark:border-gray-700 flex flex-col items-center">
-      {/* Label */}
       <div className="font-semibold text-sm py-1 text-indigo-600 dark:text-indigo-400">
         Synchro BugBase
       </div>
 
-      {/* Tombol navigasi */}
       <div className="flex justify-around w-full pb-1">
         <button
           onClick={() => router.push("/dashboard")}
