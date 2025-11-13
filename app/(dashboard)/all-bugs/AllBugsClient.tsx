@@ -15,7 +15,7 @@ export default async function AllBugsPage() {
 
   try {
     console.log("🔍 Fetching bugs...");
-    
+ 
     // Fetch all bugs first
     const { data: bugsData, error: bugsError } = await supabase
       .from("bugs")
