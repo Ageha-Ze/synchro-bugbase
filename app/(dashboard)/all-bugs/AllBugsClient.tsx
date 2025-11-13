@@ -105,7 +105,7 @@ setFilteredBugs(result);
 const formatBugId = (bug: BugWithProject) => {
 const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
 const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
-return SCB-${projectNum}-${bugNum};
+return "SCB-${projectNum}-${bugNum}";
 };
 const handleSort = (field: keyof BugWithProject) => {
 if (sortField === field) {
