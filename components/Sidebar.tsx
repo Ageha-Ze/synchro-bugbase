@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, FolderKanban, Bug, BarChart3 } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderKanban, Bug, BarChart3, Settings, Bell, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useTheme } from "next-themes";
 
 
 export default function Sidebar() {
@@ -13,15 +14,55 @@ export default function Sidebar() {
   const router = useRouter();
   const supabase = supabaseBrowser;
   const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
+const { theme, setTheme } = useTheme();
 
   const linkClass = (route: string) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 cursor-pointer
-    ${
-      path === route
-        ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm scale-[1.02]"
-        : "text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600"
-    }`;
+  `flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 cursor-pointer
+  ${
+    path === route
+      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm scale-[1.02]"
+      : "text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-white dark:hover:from-indigo-700 dark:hover:to-purple-700"
+  }`;
+
+  
+    useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { count } = await supabase
+        .from("activities" as any) // ✅ Tambah as any
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnreadCount();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel("activities_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "activities",
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -54,8 +95,9 @@ export default function Sidebar() {
     router.prefetch("/projects");
     router.prefetch("/all-bugs"); // ✅ Tambah ini
     router.prefetch("/reports"); // ✅ Tambah ini
-
   }, [router]);
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <aside className="h-screen w-64 flex flex-col bg-white border-r border-indigo-100 shadow-sm overflow-hidden md:static md:w-64">
@@ -96,12 +138,22 @@ export default function Sidebar() {
   <span className="ml-1.5 truncate">Reports</span>
 </Link>
 
+    <button
+  onClick={toggleTheme}
+  className="flex items-center gap-2 px-4 py-2 mt-2 rounded-xl font-semibold text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-all duration-300"
+>
+  {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
+  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+</button>
+
+
         {/* Logout */}
         <button
-          onClick={handleLogout}
-          disabled={loading}
-          className="flex items-center gap-2 text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-4 rounded-lg transition-all duration-300 w-full mt-auto"
-        >
+  onClick={handleLogout}
+  disabled={loading}
+  className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:text-white dark:hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-500 font-semibold py-2 px-4 rounded-lg transition-all duration-300 w-full mt-auto"
+>
+
           <LogOut className="w-5 h-5" />
           {loading ? "Logging out..." : "Logout"}
         </button>
@@ -110,20 +162,8 @@ export default function Sidebar() {
       {/* Responsif Mobile */}
       <style jsx>{`
         @media (max-width: 768px) {
-          aside {
-            position: fixed;
-            width: 100%;
-            bottom: 0;
-            top: auto;
-            flex-direction: row;
-            justify-content: flex-end;
-            border-top: 1px solid #e5e7eb;
-            border-right: none;
-            background: white;
-            z-index: 50;
-            padding: 0 1rem;
-            height: auto;
-          }
+          <aside className="md:hidden fixed bottom-0 w-full flex flex-row justify-end border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 z-50 p-4">
+
 
           nav {
             display: flex;
