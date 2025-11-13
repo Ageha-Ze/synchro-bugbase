@@ -323,7 +323,7 @@ export default function ProjectBugsClient({
                   Back to Projects
                 </Button>
                 <h1 className="text-2xl md:text-4xl font-bold leading-tight drop-shadow-sm">
-                  {projectName}
+                  <BugIcon className="w-9 h-9"/> | {projectName}
                 </h1>
                 {projectDescription && (
                   <p className="text-indigo-100 text-sm md:text-lg">
