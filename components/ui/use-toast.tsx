@@ -19,26 +19,11 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-
-const toastVariants = (
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all",
-  {
-    variants: {
-      variant: {
-        default: "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
-        destructive: "border-red-500 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
   const toast = useCallback(({ title, description, type = "default" }: Omit<Toast, "id">) => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, title, description, type }]);
 
+    // Toast otomatis hilang setelah 4 detik
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
@@ -48,7 +33,7 @@ const toastVariants = (
     <ToastContext.Provider value={{ toast }}>
       {children}
 
-      {/* Toast container */}
+      {/* Tempat munculnya toast */}
       <div className="fixed bottom-5 right-5 z-50 space-y-3">
         <AnimatePresence>
           {toasts.map((t) => (
