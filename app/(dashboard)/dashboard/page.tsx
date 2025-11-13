@@ -115,6 +115,23 @@ export default async function DashboardPage() {
     return badges[status ?? ""] || "bg-gray-100 text-gray-600";
   };
 
+  const getSeverityStyle = (severity?: string | null) => {
+    switch (severity) {
+      case "Crash/Undoable":
+        return "bg-red-700 text-white border-red-800";
+      case "High":
+        return "bg-orange-300 text-black border-orange-400";
+      case "Medium":
+        return "bg-yellow-300 text-black border-yellow-400";
+      case "Low":
+        return "bg-green-300 text-black border-green-400";
+      case "Suggestion":
+        return "bg-sky-300 text-black border-sky-400";
+      default:
+        return "bg-white text-gray-900 border-gray-200";
+    }
+  };
+
   return (
     <ClientConnectionHandler>
       <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-100 text-gray-800">
@@ -202,89 +219,92 @@ export default async function DashboardPage() {
 
             {/* Recent Bugs */}
 <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-md">
-  <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-      <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
-      Recent Bugs
-    </h2>
-    <Link
-      href="/projects"
-      className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-    >
-      View All <TrendingUp className="w-4 h-4" />
-    </Link>
-  </div>
+              <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
+                  Recent Bugs
+                </h2>
+                <Link
+                  href="/projects"
+                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                >
+                  View All <TrendingUp className="w-4 h-4" />
+                </Link>
+              </div>
 
-  <div className="space-y-3">
-    {mappedBugs.length > 0 ? (
-      mappedBugs.map((bug) => {
-        const severityColors: Record<string, string> = {
-          "Crash/Undoable": "bg-gray-900 text-white border-gray-800",
-          High: "bg-red-100 text-gray-900 border-red-200",
-          Medium: "bg-yellow-100 text-gray-900 border-yellow-200",
-          Low: "bg-green-100 text-gray-900 border-green-200",
-          Suggestion: "bg-blue-100 text-gray-900 border-blue-200",
-        };
+              <div className="space-y-3">
+                {mappedBugs.length > 0 ? (
+                  mappedBugs.map((bug) => {
+                    const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
+                    const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
+                    const bugId = `SCB-${projectNum}-${bugNum}`;
 
-        const severityStyle =
-          severityColors[bug.severity ?? ""] || "bg-gray-100 text-gray-800 border-gray-200";
-
-        return (
-          <Link
-            key={bug.id}
-            href={`/bug/${bug.id}`}
-            className={`block p-4 rounded-xl border hover:opacity-90 transition-all duration-200 group ${severityStyle}`}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <span className="text-xs opacity-80 truncate block mb-1">
-                  {bug.project?.name ?? "Unknown Project"}
-                </span>
-                <h3 className="font-semibold truncate group-hover:underline">
-                  {bug.title}
-                </h3>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityBadge(
-                      bug.severity
-                    )}`}
-                  >
-                    {bug.severity ?? "Unknown"}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(
-                      bug.status
-                    )}`}
-                  >
-                    {bug.status ?? "Unknown"}
-                  </span>
-                </div>
-                <p className="text-xs mt-2 flex items-center gap-1 opacity-70">
-                  <Clock className="w-3 h-3" />
-                  {bug.created_at
-                    ? new Date(bug.created_at).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "Unknown date"}
-                </p>
+                    return (
+                      <Link
+                        key={bug.id}
+                        href={`/bug/${bug.id}`}
+                        className={`block p-4 rounded-xl border hover:opacity-90 transition-all duration-200 group ${getSeverityStyle(bug.severity)}`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-mono font-bold opacity-90">
+                                {bugId}
+                              </span>
+                              <span className="text-xs opacity-60">•</span>
+                              <span className="text-xs opacity-80 truncate">
+                                {bug.project?.name ?? "Unknown Project"}
+                              </span>
+                            </div>
+                            
+                            <h3 className="font-semibold truncate group-hover:underline">
+                              {bug.title}
+                            </h3>
+                            
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityBadge(
+                                  bug.severity
+                                )}`}
+                              >
+                                {bug.severity ?? "Unknown"}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(
+                                  bug.status
+                                )}`}
+                              >
+                                {bug.status ?? "Unknown"}
+                              </span>
+                            </div>
+                            
+                            <p className="text-xs mt-2 flex items-center gap-1 opacity-70">
+                              <Clock className="w-3 h-3" />
+                              {bug.created_at
+                                ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "Unknown date"}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-10 text-gray-500">
+                    <BugIcon className="w-14 h-14 mx-auto mb-3 opacity-40" />
+                    <p className="text-base font-medium">No bugs yet</p>
+                    <p className="text-xs">Create your first bug to get started</p>
+                  </div>
+                )}
               </div>
             </div>
-          </Link>
-        );
-      })
-    ) : (
-      <div className="text-center py-10 text-gray-500">
-        <BugIcon className="w-14 h-14 mx-auto mb-3 opacity-40" />
-        <p className="text-base font-medium">No bugs yet</p>
-        <p className="text-xs">Create your first bug to get started</p>
-      </div>
-    )}
-  </div>
-</div>
           </div>
+        
 
           {/* Bug Trend Chart */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-md">
