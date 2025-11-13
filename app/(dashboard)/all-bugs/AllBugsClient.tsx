@@ -105,7 +105,7 @@ setFilteredBugs(result);
 const formatBugId = (bug: BugWithProject) => {
 const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
 const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
-return "SCB-${projectNum}-${bugNum}";
+return 'SCB-${projectNum}-${bugNum}';
 };
 const handleSort = (field: keyof BugWithProject) => {
 if (sortField === field) {
@@ -197,8 +197,7 @@ const SortIcon = ({ field }: { field: keyof BugWithProject }) => {
   );
 };
 return (
-
-
+<div className="space-y-6">
 {/* Header */}
     <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-6 md:p-8 text-white overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
