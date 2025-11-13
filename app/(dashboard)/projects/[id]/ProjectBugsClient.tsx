@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   Loader2,
   Bug as BugIcon,
+  Download,
 } from "lucide-react";
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
@@ -240,6 +241,66 @@ export default function ProjectBugsClient({
     );
   };
 
+  const handleExportCSV = () => {
+  // Header CSV
+  const headers = [
+    "Bug ID",
+    "Title",
+    "Description",
+    "Severity",
+    "Priority",
+    "Status",
+    "Result",
+    "Steps to Reproduce",
+    "Expected Result",
+    "Actual Result",
+    "Created At",
+  ];
+
+  // Convert bugs to CSV rows
+  const rows = filteredBugs.map((bug) => {
+    const bugId = formatBugId(bug);
+    return [
+      bugId,
+      bug.title || "",
+      bug.description || "",
+      bug.severity || "",
+      bug.priority || "",
+      bug.status || "",
+      bug.result || "",
+      bug.steps_to_reproduce || "",
+      bug.expected_result || "",
+      bug.actual_result || "",
+      bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "",
+    ].map((cell) => `"${String(cell).replace(/"/g, '""')}"`); // Escape quotes
+  });
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) => row.join(",")),
+  ].join("\n");
+
+  // Create blob and download
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  
+  const fileName = `${projectName.replace(/\s+/g, "_")}_bugs_${new Date().toISOString().split("T")[0]}.csv`;
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  toast({
+    title: "CSV Exported! 📥",
+    description: `${filteredBugs.length} bugs exported successfully.`,
+  });
+};
+
   return (
   <ClientConnectionHandler>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -286,6 +347,13 @@ export default function ProjectBugsClient({
                   <UploadCloud className="w-4 h-4 mr-2" />
                   Import Bugs
                 </Button>
+                <Button
+    onClick={handleExportCSV}
+    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm text-sm md:text-base"
+  >
+    <Download className="w-4 h-4 mr-2" />
+    Export CSV
+  </Button>
               </div>
             </div>
 
