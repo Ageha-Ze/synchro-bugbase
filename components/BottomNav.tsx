@@ -22,7 +22,6 @@ export default function BottomNav() {
       toast({
         title: "Logout Gagal",
         description: error.message,
-        variant: "destructive",
       });
       return;
     }
