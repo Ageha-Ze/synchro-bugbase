@@ -456,113 +456,113 @@ export default function ProjectBugsClient({
     </thead>
 
             <tbody className="divide-y divide-indigo-100">
-              {filteredBugs.length > 0 ? (
-        filteredBugs.map((bug, index) => (
-          <tr
-            key={bug.id}
-            onClick={() => router.push(`/bug/${bug.id}`)}
-            className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
-            style={{ animationDelay: `${index * 0.03}s` }}
+  {filteredBugs.length > 0 ? (
+    filteredBugs.map((bug, index) => (
+      <tr
+        key={bug.id}
+        onClick={() => router.push(`/bug/${bug.id}`)}
+        className={`cursor-pointer transition-colors hover:opacity-90 ${getSeverityStyle(bug.severity)}`}
+        style={{ animationDelay: `${index * 0.03}s` }}
+      >
+        <td className="px-4 md:px-6 py-3 font-mono text-xs font-bold text-gray-900">
+          {formatBugId(bug)}
+        </td>
+
+        {/* Status */}
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.status) {
+              case "New":
+                return "🆕New";
+              case "Open":
+                return "📂Open";
+              case "Blocked":
+                return "🚫Blocked";
+              case "Fixed":
+                return "✅Fixed";
+              case "To Fix in Update":
+                return "🧩TFU";
+              case "Will Not Fix":
+                return "🚷WNF";
+              case "In Progress":
+                return "⚙️In Progress";
+              default:
+                return bug.status;
+            }
+          })()}
+        </td>
+
+        {/* Title & Description */}
+        <td className="px-4 md:px-6 py-3 max-w-md">
+          <p className="text-xs font-semibold text-gray-900 truncate">
+            {bug.title}
+          </p>
+          <p className="text-[10px] text-gray-500 line-clamp-2">
+            {bug.description}
+          </p>
+        </td>
+
+        {/* Priority */}
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.priority) {
+              case "Highest":
+                return "🚨 Dire";
+              case "High":
+                return "⚠️ High";
+              case "Medium":
+                return "🟠 Mid";
+              case "Low":
+                return "🟢 Low";
+              default:
+                return bug.priority;
+            }
+          })()}
+        </td>
+
+        {/* Result */}
+        <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900">
+          {(() => {
+            switch (bug.result) {
+              case "Confirmed":
+                return "✅ Confirmed";
+              case "Closed":
+                return "🔒 Closed";
+              case "Unresolved":
+                return "⚠️ Unresolved";
+              case "To-Do":
+              default:
+                return "📝 To-Do";
+            }
+          })()}
+        </td>
+
+        {/* Created */}
+        <td className="px-4 md:px-6 py-3 text-xs text-slate-600">
+          {bug.created_at
+            ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "-"}
+        </td>
+
+        {/* Actions */}
+        <td className="px-4 md:px-6 py-3 text-right">
+          <button
+            onClick={(e) => handleDeleteBug(bug.id, e)}
+            disabled={deletingId === bug.id}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg text-xs transition-all disabled:opacity-50"
           >
-                    <td className="px-4 md:px-6 py-4 font-mono text-gray-900 font-bold">
-                      {formatBugId(bug)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                      {(() => {
-                        switch (bug.status) {
-                          case "New":
-                            return "🆕New";
-                          case "Open":
-                            return "📂Open";
-                          case "Blocked":
-                            return "🚫Blcoked";
-                          case "Fixed":
-                            return "✅Fixed";
-                          case "To Fix in Update":
-                            return "🧩TFU";
-                          case "Will Not Fix":
-                            return "🚷WNF";
-                          case "In Progress":
-                            return "⚙️In Progress";
-                          default:
-                            return bug.status;
-                        }
-                      })()}
-                    </td>
-
-                    {/* Title & Description */}
-                    <td className="px-4 md:px-6 py-4 max-w-md">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {bug.title}
-                      </p>
-                      <p className="text-xs text-gray-500 line-clamp-2">
-                        {bug.description}
-                      </p>
-                    </td>
-
-                    {/* Priority */}
-                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                      {(() => {
-                        switch (bug.priority) {
-                          case "Highest":
-                            return "🚨 Dire";
-                          case "High":
-                            return "⚠️ High";
-                          case "Medium":
-                            return "🟠 Mid";
-                          case "Low":
-                            return "🟢 Low";
-                          default:
-                            return bug.priority;
-                        }
-                      })()}
-                    </td>
-
-                    {/* Result */}
-                    <td className="px-4 md:px-6 py-4 font-semibold text-gray-900">
-                      {(() => {
-                        switch (bug.result) {
-                          case "Confirmed":
-                            return "✅ Confirmed";
-                          case "Closed":
-                            return "🔒 Closed";
-                          case "Unresolved":
-                            return "⚠️ Unresolved";
-                          case "To-Do":
-                          default:
-                            return "📝 To-Do";
-                        }
-                      })()}
-                    </td>
-
-                    {/* Created */}
-                    <td className="px-4 md:px-6 py-4 text-slate-600">
-                      {bug.created_at
-                        ? new Date(bug.created_at).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "-"}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 md:px-6 py-4 text-right">
-                      <button
-                        onClick={(e) => handleDeleteBug(bug.id, e)}
-                        disabled={deletingId === bug.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-xs md:text-sm transition-all disabled:opacity-50"
-                      >
-                        {deletingId === bug.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
-                    </td>
-                  </tr>
+            {deletingId === bug.id ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Trash2 className="w-3 h-3" />
+            )}
+          </button>
+        </td>
+      </tr>
                 ))
               ) : (
                 <tr>
