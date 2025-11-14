@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   content: [
-    "./app/**/*.{js,ts,jsx,tsx}",       // App Router
-    "./pages/**/*.{js,ts,jsx,tsx}",     // Pages Router
-    "./components/**/*.{js,ts,jsx,tsx}",// Components
-    "./src/**/*.{js,ts,jsx,tsx}",       // (optional, kalau kamu punya folder src/)
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
-
   theme: {
     extend: {
       animation: {
@@ -20,8 +20,7 @@ module.exports = {
       },
     },
   },
-
   plugins: [
-    require("tailwindcss-animate"),  // WAJIB dipasang di sini, bukan di CSS
+    require("tailwindcss-animate"),
   ],
 };
