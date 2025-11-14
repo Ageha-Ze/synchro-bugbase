@@ -6,6 +6,7 @@ import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 export default function BottomNav() {
   const path = usePathname();
@@ -13,12 +14,12 @@ export default function BottomNav() {
   const supabase = supabaseBrowser;
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const [theme, setTheme] = useState("light");
+
+  // ⭐ INI YANG BENAR
+  const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const handleLogout = async () => {
@@ -58,7 +59,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-md border-t border-gray-200 dark:border-gray-700 flex flex-col items-center">
 
-      {/* 🔥 Aksi Theme + Logout */}
+      {/* Aksi Theme + Logout */}
       <div className="w-full px-4 mt-2 pb-2 border-b border-gray-200 dark:border-gray-700 flex gap-2 justify-center">
 
         {/* Theme Toggle */}
@@ -97,36 +98,23 @@ export default function BottomNav() {
       {/* Navigation */}
       <div className="flex justify-around w-full pb-1">
 
-        <Link
-          href="/dashboard"
-          className={`flex flex-col items-center ${isActive("/dashboard")} hover:text-indigo-600`}
-        >
+        <Link href="/dashboard" className={`flex flex-col items-center ${isActive("/dashboard")} hover:text-indigo-600`}>
           <LayoutDashboard className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Dashboard</span>
         </Link>
 
-        <Link
-          href="/projects"
-          className={`flex flex-col items-center ${isActive("/projects")} hover:text-indigo-600`}
-        >
+        <Link href="/projects" className={`flex flex-col items-center ${isActive("/projects")} hover:text-indigo-600`}>
           <FolderKanban className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Projects</span>
         </Link>
 
-        <Link
-          href="/all-bugs"
-          className={`flex flex-col items-center ${isActive("/all-bugs")} hover:text-indigo-600`}
-        >
+        <Link href="/all-bugs" className={`flex flex-col items-center ${isActive("/all-bugs")} hover:text-indigo-600`}>
           <Bug className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">All Bugs</span>
         </Link>
 
-        {/* ⭐ Reports (DITAMBAHKAN) */}
-        <Link
-          href="/reports"
-          className={`flex flex-col items-center ${isActive("/reports")} hover:text-indigo-600`}
-        >
-          <BarChart3 className="w-5 h-5 transition-transform group-hover:rotate-[20deg]" />
+        <Link href="/reports" className={`flex flex-col items-center ${isActive("/reports")} hover:text-indigo-600`}>
+          <BarChart3 className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Reports</span>
         </Link>
 
