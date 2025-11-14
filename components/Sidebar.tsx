@@ -157,43 +157,5 @@ const { theme, setTheme } = useTheme();
       {loading ? "Logging out..." : "Logout"}
     </button>
   </nav>
-
-  {/* Responsif Mobile */}
-  <style jsx>{`
-    @media (max-width: 768px) {
-      aside {
-        md:hidden;
-        fixed;
-        bottom: 0;
-        w-full;
-        flex-row;
-        justify-end;
-        border-t border-gray-200 dark:border-gray-700;
-        bg-white dark:bg-gray-900;
-        z-50;
-        p-4;
-      }
-
-      nav {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-        overflow-x: auto;
-        flex: 1;
-      }
-
-      nav a,
-      nav button {
-        white-space: nowrap;
-        flex-shrink: 0;
-        font-size: 0.8rem;
-        padding: 0.5rem 0.75rem;
-      }
-    }
-  `}</style>
-</aside>
   );
 }
