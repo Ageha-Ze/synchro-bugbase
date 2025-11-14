@@ -16,11 +16,11 @@ import {
   Plus,
   Loader2,
   Link as LinkIcon,
+  User,
 } from "lucide-react";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 import type { Bug } from "@/lib/bugs";
 
-// ✅ Extend Bug type dengan attachments
 interface BugWithAttachments extends Bug {
   attachments?: Attachment[];
   project_number?: string | number | null;
@@ -40,6 +40,9 @@ interface Comment {
   content: string;
   author?: string | null;
   created_at: string | null;
+  user_id?: string | null;
+  full_name?: string | null;
+  role?: "QA" | "Developer" | "Manager" | null;
 }
 
 interface BugDetailClientProps {
@@ -89,120 +92,125 @@ export default function BugDetailClient({
     setPreviewOpen(true);
   };
 
-  const fetchWithTimeout = (p: Promise<any>, timeout = 10000) =>
-    Promise.race([
-      p,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Request timed out")), timeout)
-      ),
-    ]);
-
-useEffect(() => {
-  if (!navigator.onLine) {
-    setError("You are offline. Please check your internet connection.");
-    setLoading(false);
-    return;
-  }
-
-  let isMounted = true;
-
-  const fetchBugData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // ✅ Langsung await, tanpa fetchWithTimeout
-      const [bugResult, attachmentsResult, commentsResult] = await Promise.all([
-        supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
-        supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
-        supabase
-          .from("comments")
-          .select("*")
-          .eq("bug_id", initialBug.id)
-          .order("created_at", { ascending: false }),
-      ]);
-
-      const bugData = bugResult.data;
-      const bugError = bugResult.error;
-      const attachmentsData = attachmentsResult.data;
-      const commentsData = commentsResult.data;
-      const commentsError = commentsResult.error;
-
-      if (bugError) {
-        console.warn("Failed to fetch main bug:", bugError);
-        if (isMounted) setError(bugError.message || "Failed to fetch bug");
-      }
-
-      if (commentsError) throw commentsError;
-
-      // Normalize attachments
-      const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
-        (a: any) => {
-          const url = a?.url ?? null;
-          if (!url) return { ...a, url: null };
-          if (typeof url === "string" && url.startsWith("http")) {
-            return { ...a, url };
-          }
-          try {
-            const res = supabase.storage.from("bug_attachments").getPublicUrl(url);
-            const publicUrl = (res as any)?.data?.publicUrl ?? url;
-            return { ...a, url: publicUrl };
-          } catch (e) {
-            return { ...a, url };
-          }
-        }
-      );
-
-      if (isMounted) {
-        const mergedBug: BugWithAttachments = {
-          ...(bugData ?? initialBug),
-          attachments: attachmentsWithPublicUrl,
-        };
-
-        setBug(mergedBug);
-        setFormData(mergedBug);
-        setComments(commentsData || []);
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch bug data:", err);
-      if (isMounted) setError(err?.message || "Failed to fetch bug data");
-    } finally {
-      if (isMounted) setLoading(false);
+  useEffect(() => {
+    if (!navigator.onLine) {
+      setError("You are offline. Please check your internet connection.");
+      setLoading(false);
+      return;
     }
-  };
 
-  // Initial fetch
-  fetchBugData();
+    let isMounted = true;
 
-  // Realtime subscription
-  const channel = (supabase as any)
-    .channel?.("realtime-bug-updates")
-    .on?.(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "bugs",
-        filter: `id=eq.${initialBug.id}`,
-      },
-      async (payload: any) => {
-        console.log("Realtime payload:", payload);
-        await fetchBugData();
-      }
-    )
-    .subscribe?.();
-
-  return () => {
-    if (channel && (supabase as any).removeChannel) {
+    const fetchBugData = async () => {
       try {
-        (supabase as any).removeChannel(channel);
-      } catch (e) {
-        // ignore
+        setLoading(true);
+        setError(null);
+
+        const [bugResult, attachmentsResult, commentsRaw] = await Promise.all([
+          supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
+          supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
+          supabase
+            .from("comments")
+            .select("*")
+            .eq("bug_id", initialBug.id)
+            .order("created_at", { ascending: false }),
+        ]);
+
+        const bugData = bugResult.data;
+        const bugError = bugResult.error;
+        const attachmentsData = attachmentsResult.data;
+        const rawComments = commentsRaw.data || [];
+
+        if (bugError) {
+          console.warn("Failed to fetch main bug:", bugError);
+          if (isMounted) setError(bugError.message || "Failed to fetch bug");
+        }
+
+        // Fetch profiles for each comment
+        const commentsWithProfiles: Comment[] = await Promise.all(
+          rawComments.map(async (comment: any) => {
+            if (comment.user_id) {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("full_name, role")
+                .eq("id", comment.user_id)
+                .single();
+              
+              return {
+                ...comment,
+                full_name: profile?.full_name || null,
+                role: profile?.role || null,
+              };
+            }
+            return comment;
+          })
+        );
+
+        const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
+          (a: any) => {
+            const url = a?.url ?? null;
+            if (!url) return { ...a, url: null };
+            if (typeof url === "string" && url.startsWith("http")) {
+              return { ...a, url };
+            }
+            try {
+              const res = supabase.storage.from("bug_attachments").getPublicUrl(url);
+              const publicUrl = (res as any)?.data?.publicUrl ?? url;
+              return { ...a, url: publicUrl };
+            } catch (e) {
+              return { ...a, url };
+            }
+          }
+        );
+
+        if (isMounted) {
+          const mergedBug: BugWithAttachments = {
+            ...(bugData ?? initialBug),
+            attachments: attachmentsWithPublicUrl,
+          };
+
+          setBug(mergedBug);
+          setFormData(mergedBug);
+          setComments(commentsWithProfiles);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch bug data:", err);
+        if (isMounted) setError(err?.message || "Failed to fetch bug data");
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    }
-    isMounted = false;
-  };
-}, [initialBug.id]);
+    };
+
+    fetchBugData();
+
+    const channel = (supabase as any)
+      .channel?.("realtime-bug-updates")
+      .on?.(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bugs",
+          filter: `id=eq.${initialBug.id}`,
+        },
+        async (payload: any) => {
+          console.log("Realtime payload:", payload);
+          await fetchBugData();
+        }
+      )
+      .subscribe?.();
+
+    return () => {
+      if (channel && (supabase as any).removeChannel) {
+        try {
+          (supabase as any).removeChannel(channel);
+        } catch (e) {
+          // ignore
+        }
+      }
+      isMounted = false;
+    };
+  }, [initialBug.id]);
 
   const closePreview = () => {
     if (previewType === "video") {
@@ -331,27 +339,89 @@ useEffect(() => {
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
+    
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const user = (authData as any)?.user;
-      const { data, error } = await supabase
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error("Auth error:", authError);
+        alert("Authentication error: " + authError.message);
+        return;
+      }
+
+      const user = authData?.user;
+      console.log("Current user:", user?.email, user?.id);
+
+      // Prepare comment data - JANGAN gunakan user_id jika kolom belum dikenali
+      const commentData: any = {
+        bug_id: bug.id,
+        content: newComment.trim(),
+        user_id: user?.id,   // 🔥 FIX PALING PENTING
+
+      };
+
+      console.log("Inserting comment data:", commentData);
+
+      const { data: newCommentData, error: insertError } = await supabase
         .from("comments")
-        .insert([
-          {
-            bug_id: bug.id,
-            content: newComment.trim(),
-            author: user?.email || "Anonymous",
-          },
-        ])
-        .select()
+        .insert([commentData])
+        .select("*, profiles(email)")
         .single();
 
-      if (error) throw error;
-      setComments((prev) => [data, ...prev]);
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw new Error(insertError.message || "Failed to insert comment");
+      }
+
+      if (!newCommentData) {
+        throw new Error("No data returned from insert");
+      }
+
+      console.log("Comment inserted:", newCommentData);
+
+      // Fetch profile for the new comment
+      let commentWithProfile: Comment = {
+        ...newCommentData,
+        full_name: null,
+        role: null,
+      };
+
+      if (user?.id) {
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("full_name, role")
+            .eq("id", user.id)
+            .single();
+          
+          if (profileError) {
+            console.warn("Profile fetch error:", profileError);
+          } else if (profile) {
+            commentWithProfile = {
+              ...newCommentData,
+              full_name: profile.full_name || null,
+              role: profile.role || null,
+            };
+            console.log("Profile fetched:", profile);
+          }
+        } catch (profileError) {
+          console.warn("Failed to fetch profile:", profileError);
+        }
+      }
+
+      setComments((prev) => [commentWithProfile, ...prev]);
       setNewComment("");
+      console.log("Comment added successfully!");
+      
     } catch (err: any) {
-      console.error(err);
-      alert("Failed to add comment: " + (err?.message || "Unknown error"));
+      console.error("Comment error details:", {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        full: err
+      });
+      alert("Failed to add comment: " + (err?.message || JSON.stringify(err) || "Unknown error"));
     }
   };
 
@@ -400,206 +470,277 @@ useEffect(() => {
     return map[type]?.[value] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
+  const getRoleBadge = (role: string | null | undefined) => {
+    const roleColors: Record<string, string> = {
+      QA: "bg-blue-100 text-blue-800 border-blue-300",
+      Developer: "bg-purple-100 text-purple-800 border-purple-300",
+      Manager: "bg-green-100 text-green-800 border-green-300",
+    };
+    
+    if (!role) return null;
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${roleColors[role] || "bg-gray-100 text-gray-800 border-gray-300"}`}>
+        {role}
+      </span>
+    );
+  };
+
   return (
-  <ClientConnectionHandler>
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main */}
-          <div className="lg:col-span-2 space-y-6">
-            {loading && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
-                <div className="text-center space-y-2">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 dark:text-indigo-400" />
-                  <p className="text-indigo-600 dark:text-indigo-400 font-semibold">Fetching Data...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Header */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
-                <Button
-                  onClick={() => {
-                    router.replace(`/projects/${projectId}`);
-                    router.refresh();
-                  }}
-                  className="bg-white dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 border-2 border-indigo-200 dark:border-indigo-700 w-full sm:w-auto"
-                  size="sm"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" /> Back
-                </Button>
-
-                <div className="flex gap-2 w-full sm:w-auto">
-                  {editing && (
-                    <Button
-  onClick={() => {
-    setEditing(false);
-    setFormData(bug);
-  }}
-  variant="outline"
-  size="sm"
-  className="flex-1 sm:flex-none border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
->
-  <X className="w-4 h-4 mr-2" />Cancel
-</Button>
-
-                  )}
-                  <Button
-                    onClick={editing ? handleSave : () => setEditing(true)}
-                    size="sm"
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg flex-1 sm:flex-none"
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : editing ? (
-                      <Save className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Edit2 className="w-4 h-4 mr-2" />
-                    )}
-                    {editing ? "Save Changes" : "Edit Bug"}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Title & Description */}
-              {editing ? (
-                <div className="space-y-4">
-                  <input
-                    name="title"
-                    value={(formData.title as string) || ""}
-                    onChange={handleChange}
-                    className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-                    placeholder="Title"
-                  />
-                  <textarea
-                    name="description"
-                    value={(formData.description as string) || ""}
-                    onChange={handleChange}
-                    className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-                    placeholder="Bug Location"
-                    rows={2}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    {bug.bug_number ? (
-                      <span className="text-indigo-600 dark:text-indigo-400">
-                        SCB-{bug.project_number ?? "01"}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
-                      </span>
-                    ) : null}
-                    {bug.title}
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300 mt-2">{bug.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-2">
-                    <Calendar className="w-4 h-4" /> Created:{" "}
-                    {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
+    <ClientConnectionHandler>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main */}
+            <div className="lg:col-span-2 space-y-6">
+              {loading && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+                  <div className="text-center space-y-2">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 dark:text-indigo-400" />
+                    <p className="text-indigo-600 dark:text-indigo-400 font-semibold">Fetching Data...</p>
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Details Section */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8 space-y-6">
-              {["steps_to_reproduce", "expected_result", "actual_result"].map((f) => (
-                <div key={f}>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{f.replaceAll("_", " ")}</label>
-                  {editing ? (
-                    <textarea
-                      name={f}
-                      value={(formData as any)[f] || ""}
-                      onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 bg-white dark:bg-neutral-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white"
-                      rows={4}
-                    />
-                  ) : (
-                      <div className="prose prose-sm max-w-none bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700 text-gray-900 dark:text-white">
-                      {(bug as any)[f]
-                        ? (bug as any)[f].split("\n").map((line: string, i: number) => <p key={i}>{line}</p>)
-                        : <p className="text-gray-400 dark:text-gray-400 italic">No data provided</p>}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {/* Header */}
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                  <Button
+                    onClick={() => {
+                      router.replace(`/projects/${projectId}`);
+                      router.refresh();
+                    }}
+                    className="bg-white dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 border-2 border-indigo-200 dark:border-indigo-700 w-full sm:w-auto"
+                    size="sm"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                  </Button>
 
-              {/* Attachments */}
-              <div>
-                <label className="block text-sm font-bold mb-2 text-gray-800 dark:text-gray-100">Attachments</label>
-                {bug.attachments?.length ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {bug.attachments!.map((a) => (
-                      <div
-                        key={a.id}
-                        className="relative border-2 border-indigo-100 dark:border-neutral-700 rounded-xl overflow-hidden bg-white dark:bg-neutral-900 shadow-sm hover:shadow-lg transition-all group"
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {editing && (
+                      <Button
+                        onClick={() => {
+                          setEditing(false);
+                          setFormData(bug);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 sm:flex-none border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
                       >
-                        {a.type === "image" && a.url && (
-                          <img
-                            src={a.url}
-                            alt="Bug Attachment"
-                            onClick={() => openPreview("image", a.url || "")}
-                            className="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 hover:scale-105"
-                          />
-                        )}
+                        <X className="w-4 h-4 mr-2" />Cancel
+                      </Button>
+                    )}
+                    <Button
+                      onClick={editing ? handleSave : () => setEditing(true)}
+                      size="sm"
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg flex-1 sm:flex-none"
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : editing ? (
+                        <Save className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Edit2 className="w-4 h-4 mr-2" />
+                      )}
+                      {editing ? "Save Changes" : "Edit Bug"}
+                    </Button>
+                  </div>
+                </div>
 
-                        {a.type === "video" && a.url && (
-                          <div className="relative group">
-                            <video
-                              key={a.url}
-                              src={a.url}
-                              crossOrigin="anonymous"
-                              controls
-                              playsInline
-                              onError={(e) => console.error("Video error:", e)}
-                              style={{
-                                width: "100%",
-                                height: "160px",
-                                borderRadius: "0.5rem",
-                                backgroundColor: "black",
-                                objectFit: "cover",
-                              }}
-                              className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg bg-black"
-                            />
-                          </div>
-                        )}
-
-                        {(!a.type || a.type === "link") && a.url && (
-                          <div className="p-4">
-                            <a
-                              href={a.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-2 break-all"
-                            >
-                              <LinkIcon className="w-4 h-4" /> {a.url}
-                            </a>
-                          </div>
-                        )}
-
-                        {editing && (
-                          <button
-                            onClick={() => handleDeleteAttachment(a.id)}
-                            className="absolute top-2 right-2 bg-white dark:bg-neutral-800 border border-red-200 dark:border-red-400 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-full transition-all"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                {/* Title & Description */}
+                {editing ? (
+                  <div className="space-y-4">
+                    <input
+                      name="title"
+                      value={(formData.title as string) || ""}
+                      onChange={handleChange}
+                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+                      placeholder="Title"
+                    />
+                    <textarea
+                      name="description"
+                      value={(formData.description as string) || ""}
+                      onChange={handleChange}
+                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+                      placeholder="Bug Location"
+                      rows={2}
+                    />
                   </div>
                 ) : (
-                  <p className="text-gray-400 dark:text-gray-400 italic bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700">
-                    No attachments yet
-                  </p>
-                )}
-
-                {/* New Attachments UI */}
-                {editing && (
-                  <div className="mt-5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border-2 border-indigo-200 dark:border-indigo-700 space-y-4">
-                    {/* File/Link Upload */}
-                    {/* ...code file upload tetap sama, hanya menambahkan dark:bg dan dark:border*/}
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                      {bug.bug_number ? (
+                        <span className="text-indigo-600 dark:text-indigo-400">
+                          SCB-{bug.project_number ?? "01"}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
+                        </span>
+                      ) : null}
+                      {bug.title}
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">{bug.description}</p>
+                    <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-2">
+                      <Calendar className="w-4 h-4" /> Created:{" "}
+                      {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {/* Details Section */}
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8 space-y-6">
+                {["steps_to_reproduce", "expected_result", "actual_result"].map((f) => (
+                  <div key={f}>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{f.replaceAll("_", " ")}</label>
+                    {editing ? (
+                      <textarea
+                        name={f}
+                        value={(formData as any)[f] || ""}
+                        onChange={handleChange}
+                        className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 bg-white dark:bg-neutral-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white"
+                        rows={4}
+                      />
+                    ) : (
+                      <div className="prose prose-sm max-w-none bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700 text-gray-900 dark:text-white">
+                        {(bug as any)[f]
+                          ? (bug as any)[f].split("\n").map((line: string, i: number) => <p key={i}>{line}</p>)
+                          : <p className="text-gray-400 dark:text-gray-400 italic">No data provided</p>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Attachments */}
+                <div>
+                  <label className="block text-sm font-bold mb-2 text-gray-800 dark:text-gray-100">Attachments</label>
+                  {bug.attachments?.length ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {bug.attachments!.map((a) => (
+                        <div
+                          key={a.id}
+                          className="relative border-2 border-indigo-100 dark:border-neutral-700 rounded-xl overflow-hidden bg-white dark:bg-neutral-900 shadow-sm hover:shadow-lg transition-all group"
+                        >
+                          {a.type === "image" && a.url && (
+                            <img
+                              src={a.url}
+                              alt="Bug Attachment"
+                              onClick={() => openPreview("image", a.url || "")}
+                              className="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 hover:scale-105"
+                            />
+                          )}
+
+                          {a.type === "video" && a.url && (
+                            <div className="relative group">
+                              <video
+                                key={a.url}
+                                src={a.url}
+                                crossOrigin="anonymous"
+                                controls
+                                playsInline
+                                onError={(e) => console.error("Video error:", e)}
+                                style={{
+                                  width: "100%",
+                                  height: "160px",
+                                  borderRadius: "0.5rem",
+                                  backgroundColor: "black",
+                                  objectFit: "cover",
+                                }}
+                                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg bg-black"
+                              />
+                            </div>
+                          )}
+
+                          {(!a.type || a.type === "link") && a.url && (
+                            <div className="p-4">
+                              <a
+                                href={a.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-2 break-all"
+                              >
+                                <LinkIcon className="w-4 h-4" /> {a.url}
+                              </a>
+                            </div>
+                          )}
+
+                          {editing && (
+                            <button
+                              onClick={() => handleDeleteAttachment(a.id)}
+                              className="absolute top-2 right-2 bg-white dark:bg-neutral-800 border border-red-200 dark:border-red-400 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-full transition-all"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 dark:text-gray-400 italic bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700">
+                      No attachments yet
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                  <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> Comments ({comments.length})
+                </h2>
+
+                <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-5 border-2 border-indigo-200 dark:border-indigo-700">
+                  <textarea 
+                    value={newComment} 
+                    onChange={(e) => setNewComment(e.target.value)} 
+                    placeholder="Write a comment..." 
+                    className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 resize-none bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100" 
+                    rows={3} 
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <Button 
+                      onClick={handleAddComment} 
+                      disabled={!newComment.trim()} 
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
+                    >
+                      <Send className="w-4 h-4 mr-2" /> Post Comment
+                    </Button>
+                  </div>
+                </div>
+
+                {comments.length > 0 ? comments.map((c) => (
+                  <div 
+                    key={c.id} 
+                    className="border-2 border-indigo-100 dark:border-neutral-700 rounded-xl p-5 mb-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-800 transition-all"
+                >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg">
+                            <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <p className="font-bold text-gray-900 dark:text-gray-100">
+                              {c.full_name || c.author || "Anonymous"}
+                            </p>
+                          </div>
+                          {c.role && getRoleBadge(c.role)}
+                        </div>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 ml-1">
+                          {c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteComment(c.id)} 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap ml-1">
+                      {c.content}
+                    </p>
+                  </div>
+                )) : (
+                  <p className="text-center text-gray-400 dark:text-gray-500 py-12">
+                    No comments yet
+                  </p>
                 )}
               </div>
 
@@ -624,7 +765,7 @@ useEffect(() => {
                       <img
                         src={previewUrl}
                         alt="Preview"
-                      className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                       />
                     )}
 
@@ -654,90 +795,58 @@ useEffect(() => {
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-6 space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Status & Priority</h2>
-                {!editing && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                    Read-only
-                  </span>
-                )}
-              </div>
-
-              {["status", "severity", "priority", "result"].map((k) => (
-                <div key={k} className="pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
-                    {k}
-                  </label>
-                  {editing ? (
-                    <select
-                      name={k}
-                      value={(formData as any)[k] ?? ""}
-                      onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                    >
-                      {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
-                    </select>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold border ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
-                        {(bug as any)[k] || "To-Do"}
-                      </span>
-                    </div>
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Status & Priority</h2>
+                  {!editing && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                      Read-only
+                    </span>
                   )}
                 </div>
-              ))}
 
-              {/* Comments */}
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
-                  <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> Comments ({comments.length})
-                </h2>
-
-                <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-5 border-2 border-indigo-200 dark:border-indigo-700">
-                  <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Write a comment..." className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 resize-none bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100" rows={3} />
-                  <div className="mt-3 flex justify-end">
-                    <Button onClick={handleAddComment} disabled={!newComment.trim()} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg">
-                      <Send className="w-4 h-4 mr-2" /> Post Comment
-                    </Button>
-                  </div>
-                </div>
-
-                {comments.length > 0 ? comments.map((c) => (
-                  <div key={c.id} className="border-2 border-indigo-100 dark:border-neutral-700 rounded-xl p-5 mb-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-800 transition-all">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-gray-100">{c.author || "Anonymous"}</p>
-                        <p className="text-xs text-indigo-600 dark:text-indigo-400">{c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}</p>
+                {["status", "severity", "priority", "result"].map((k) => (
+                  <div key={k} className="pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                      {k}
+                    </label>
+                    {editing ? (
+                      <select
+                        name={k}
+                        value={(formData as any)[k] ?? ""}
+                        onChange={handleChange}
+                        className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      >
+                        {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
+                        {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
+                        {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
+                        {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold border ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
+                          {(bug as any)[k] || "To-Do"}
+                        </span>
                       </div>
-                      <button onClick={() => handleDeleteComment(c.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-lg transition-all">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{c.content}</p>
+                    )}
                   </div>
-                )) : <p className="text-center text-gray-400 dark:text-gray-500 py-12">No comments yet</p>}
-              </div>
+                ))}
 
-              {editing && (
-                <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    💡 Changes will be saved when you click "Save Changes"
-                  </p>
-                </div>
-              )}
+                {editing && (
+                  <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                      💡 Changes will be saved when you click "Save Changes"
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </ClientConnectionHandler>
-);
+    </ClientConnectionHandler>
+  );
 }
