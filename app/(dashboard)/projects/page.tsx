@@ -161,16 +161,27 @@ const fetchRecentBugs = async (): Promise<RecentBugs[]> => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-900 animate-fadeInUp transition-colors duration-300">
-      <div className="text-center">
-        <div className="w-10 h-10 mx-auto mb-4 border-4 border-indigo-300 dark:border-indigo-700 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin transition-colors duration-300"></div>
-        <p className="text-gray-500 dark:text-gray-300 text-sm font-medium animate-pulse transition-colors duration-300">
-          Loading Projects
-        </p>
-      </div>
+  <div className="flex items-center justify-center min-h-screen 
+    bg-gradient-to-br 
+    from-background 
+    via-muted 
+    to-background 
+    dark:from-black dark:via-gray-900 dark:to-gray-950
+    animate-fadeInUp transition-colors duration-300">
+
+    <div className="text-center">
+      <div className="w-10 h-10 mx-auto mb-4 border-4 
+        border-primary/40 dark:border-primary/30 
+        border-t-primary dark:border-t-primary/80
+        rounded-full animate-spin transition-colors duration-300" />
+
+      <p className="text-muted-foreground text-sm font-medium animate-pulse">
+        Loading Projects
+      </p>
     </div>
-    );
-  }
+  </div>
+);
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-6 sm:px-6 lg:px-8">
