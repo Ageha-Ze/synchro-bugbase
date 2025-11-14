@@ -1,43 +1,28 @@
 // lib/supabaseServer.ts
 import { createServerClient } from "@supabase/ssr";
-import { Cookie } from "next-cookie";
+import { cookies } from "next/headers";
 import type { Database } from "@/types/supabase";
 
-export function supabaseServer() {
-  let cookieStore: any;
-
-  try {
-    // ✅ Production / server-side environment
-    cookieStore = new Cookie();
-  } catch {
-    // 🧩 Localhost / dev fallback
-    cookieStore = {
-      get: () => undefined,
-      set: () => {},
-      remove: () => {},
-    };
-  }
+export async function supabaseServer() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get?.(name);
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: any) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set?.(name, value, options);
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
           } catch {
-            /* ignore dev mode */
-          }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.remove?.(name, options);
-          } catch {
-            /* ignore dev mode */
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
           }
         },
       },
