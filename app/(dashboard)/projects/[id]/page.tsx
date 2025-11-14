@@ -1,80 +1,34 @@
-import {supabaseServer} from "@/lib/supabaseServer";
-import ProjectBugsClient from "./ProjectBugsClient";
-import ClientConnectionHandler from "@/components/ClientConnectionHandler";
+import { supabaseServer } from "@/lib/supabaseServer"; import ProjectBugsClient from "./ProjectBugsClient"; import ClientConnectionHandler from "@/components/ClientConnectionHandler";
 
-interface ProjectDetailPageProps {
-  params: Promise<{ id: string }>;
+interface ProjectDetailPageProps { params: Promise<{ id: string }>; }
+
+export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) { const { id } = await params; console.log("📌 Page received project id from URL:", id); console.log("📌 ID type:", typeof id); console.log("📌 ID length:", id?.length);
+
+const supabase = await supabaseServer();
+
+const { data: project, error: projectError } = await supabase .from("projects") .select("*") .eq("id", id) .maybeSingle();
+
+if (projectError) { return ( <div className="dark:bg-background dark:text-foreground min-h-screen"> <div className="p-6 text-center text-red-500"> <h1 className="text-xl font-semibold mb-4">Database Error</h1> <p className="mb-2">Error: {projectError.message}</p> <p className="text-sm">Code: {projectError.code}</p> <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-xs"> {JSON.stringify(projectError, null, 2)} </pre> </div> ); }
+
+if (!project) { return ( <div className="p-6 text-center text-gray-500"> <h1 className="text-xl font-semibold mb-4">Project not found</h1> <p className="text-sm mb-2">Looking for ID: {id}</p>
+
+<details className="mt-4 text-left">
+      <summary className="cursor-pointer text-blue-600">Debug Info</summary>
+      <pre className="mt-2 bg-gray-100 p-4 rounded text-xs">
+        ID: {id}
+        Type: {typeof id}
+        Length: {id?.length}
+      </pre>
+    </details>
+  </div>
+);
+
 }
 
-export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const { id } = await params;
-  console.log("📌 Page received project id from URL:", id);
-  console.log("📌 ID type:", typeof id);
-  console.log("📌 ID length:", id?.length);
+const { data: bugsRaw, error: bugsError } = await supabase .from("bugs") .select("*") .eq("project_id", id) .order("created_at", { ascending: false });
 
-  const supabase = await supabaseServer();
-  // Debug query
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+if (bugsError) { console.error("🐞 Error fetching bugs:", bugsError.message); }
 
-  console.log("📊 Query result:", { project, error: projectError });
+const bugs = bugsRaw ?? [];
 
-  // Show error if any
-  if (projectError) {
-    return (
-      <div className="p-6 text-center text-red-500">
-        <h1 className="text-xl font-semibold mb-4">Database Error</h1>
-        <p className="mb-2">Error: {projectError.message}</p>
-        <p className="text-sm">Code: {projectError.code}</p>
-        <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-xs">
-          {JSON.stringify(projectError, null, 2)}
-        </pre>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        <h1 className="text-xl font-semibold mb-4">Project not found</h1>
-        <p className="text-sm mb-2">Looking for ID: {id}</p>
-        <details className="mt-4 text-left">
-          <summary className="cursor-pointer text-blue-600">Debug Info</summary>
-          <pre className="mt-2 bg-gray-100 p-4 rounded text-xs">
-            ID: {id}
-            Type: {typeof id}
-            Length: {id?.length}
-          </pre>
-        </details>
-      </div>
-    );
-  }
-
-  // ambil bug list
-  const { data: bugsRaw, error: bugsError } = await supabase
-    .from("bugs")
-    .select("*")
-    .eq("project_id", id)
-    .order("created_at", { ascending: false });
-
-  if (bugsError) {
-    console.error("🐞 Error fetching bugs:", bugsError.message);
-  }
-
-  const bugs = bugsRaw ?? []; // fallback supaya tidak null
-
-  return (
-    <ClientConnectionHandler>
-      <ProjectBugsClient
-        projectId={project.id}
-        projectNumber={project.project_number}
-        projectName={project.name ?? "Untitled Project"}
-        projectDescription={project.description ?? ""}
-        initialBugs={bugs}
-      />
-    </ClientConnectionHandler>
-  );
-}
+return ( <ClientConnectionHandler> <ProjectBugsClient projectId={project.id} projectNumber={project.project_number} projectName={project.name ?? "Untitled Project"} projectDescription={project.description ?? ""} initialBugs={bugs} /> </ClientConnectionHandler> </div> ); }
