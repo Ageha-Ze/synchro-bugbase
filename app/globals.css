@@ -8,11 +8,9 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @keyframes fadeIn {
   from {
     opacity: 0;
-  to { opacity: 1; }
   }
   to {
     opacity: 1;
@@ -85,6 +83,46 @@ span.px-2.py-0\.5:hover {
 .QuickActions button:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(79, 70, 229, 0.15);
+}
+
+/* Responsive Mobile Sidebar */
+@media (max-width: 768px) {
+  .sidebar-mobile {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    border-top: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    z-index: 50;
+    padding: 1rem;
+  }
+
+  .dark .sidebar-mobile {
+    background-color: #111827;
+    border-color: #374151;
+  }
+
+  .sidebar-mobile nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    overflow-x: auto;
+    flex: 1;
+  }
+
+  .sidebar-mobile nav a,
+  .sidebar-mobile nav button {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
 }
 
 /* ... rest of your global styles */
