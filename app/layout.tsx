@@ -5,8 +5,8 @@ import { ToastProvider } from "@/components/ui/use-toast";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-background text-foreground transition-colors">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
