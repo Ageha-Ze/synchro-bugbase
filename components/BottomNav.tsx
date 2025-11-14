@@ -118,6 +118,11 @@ export default function BottomNav() {
           <span className="text-[10px] mt-0.5">Reports</span>
         </Link>
 
+        <Link href="/profile" className={`flex flex-col items-center ${isActive("/profile")} hover:text-indigo-600`}>
+  <User className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Profile</span>
+</Link>
+
       </div>
     </nav>
   );
