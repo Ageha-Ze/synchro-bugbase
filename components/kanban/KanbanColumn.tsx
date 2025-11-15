@@ -1,6 +1,5 @@
 import { Bug } from "@/lib/bugs";
 
-
 interface Props {
   title: string;
   bugs: Bug[];
