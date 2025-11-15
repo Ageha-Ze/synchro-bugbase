@@ -43,6 +43,7 @@ interface Comment {
   user_id?: string | null;
   full_name?: string | null;
   role?: "QA" | "Developer" | "Manager" | null;
+  avatar_url?: string | null; // ✅ TAMBAH INI
 }
 
 interface BugDetailClientProps {
@@ -132,7 +133,7 @@ export default function BugDetailClient({
             if (comment.user_id) {
               const { data: profile } = await supabase
                 .from("profiles")
-                .select("full_name, role")
+                .select("full_name, role, avatar_url")
                 .eq("id", comment.user_id)
                 .single();
               
@@ -140,6 +141,8 @@ export default function BugDetailClient({
                 ...comment,
                 full_name: profile?.full_name || null,
                 role: profile?.role || null,
+                avatar_url: profile?.avatar_url || null, // ✅ TAMBAH INI
+
               };
             }
             return comment;
@@ -384,13 +387,15 @@ export default function BugDetailClient({
         ...newCommentData,
         full_name: null,
         role: null,
+        avatar_url: null, // ✅ TAMBAH INI
+
       };
 
       if (user?.id) {
         try {
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("full_name, role")
+            .select("full_name, role, avatar_url")
             .eq("id", user.id)
             .single();
           
@@ -401,6 +406,8 @@ export default function BugDetailClient({
               ...newCommentData,
               full_name: profile.full_name || null,
               role: profile.role || null,
+              avatar_url: profile.avatar_url || null, // ✅ TAMBAH INI
+
             };
             console.log("Profile fetched:", profile);
           }
@@ -682,118 +689,88 @@ export default function BugDetailClient({
               </div>
 
               {/* Comments Section */}
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
-                  <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> Comments ({comments.length})
-                </h2>
+<div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
+  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+    <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> Comments ({comments.length})
+  </h2>
 
-                <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-5 border-2 border-indigo-200 dark:border-indigo-700">
-                  <textarea 
-                    value={newComment} 
-                    onChange={(e) => setNewComment(e.target.value)} 
-                    placeholder="Write a comment..." 
-                    className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 resize-none bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100" 
-                    rows={3} 
-                  />
-                  <div className="mt-3 flex justify-end">
-                    <Button 
-                      onClick={handleAddComment} 
-                      disabled={!newComment.trim()} 
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
-                    >
-                      <Send className="w-4 h-4 mr-2" /> Post Comment
-                    </Button>
-                  </div>
-                </div>
+  <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-5 border-2 border-indigo-200 dark:border-indigo-700">
+    <textarea 
+      value={newComment} 
+      onChange={(e) => setNewComment(e.target.value)} 
+      placeholder="Write a comment..." 
+      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 resize-none bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100" 
+      rows={3} 
+    />
+    <div className="mt-3 flex justify-end">
+      <Button 
+        onClick={handleAddComment} 
+        disabled={!newComment.trim()} 
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
+      >
+        <Send className="w-4 h-4 mr-2" /> Post Comment
+      </Button>
+    </div>
+  </div>
 
-                {comments.length > 0 ? comments.map((c) => (
-                  <div 
-                    key={c.id} 
-                    className="border-2 border-indigo-100 dark:border-neutral-700 rounded-xl p-5 mb-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-800 transition-all"
-                >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg">
-                            <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                            <p className="font-bold text-gray-900 dark:text-gray-100">
-                              {c.full_name || c.author || "Anonymous"}
-                            </p>
-                          </div>
-                          {c.role && getRoleBadge(c.role)}
-                        </div>
-                        <p className="text-xs text-indigo-600 dark:text-indigo-400 ml-1">
-                          {c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}
-                        </p>
-                      </div>
-                      <button 
-                        onClick={() => handleDeleteComment(c.id)} 
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-lg transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap ml-1">
-                      {c.content}
-                    </p>
-                  </div>
-                )) : (
-                  <p className="text-center text-gray-400 dark:text-gray-500 py-12">
-                    No comments yet
-                  </p>
-                )}
+  {comments.length > 0 ? comments.map((c) => (
+    <div 
+      key={c.id} 
+      className="border-2 border-indigo-100 dark:border-neutral-700 rounded-xl p-5 mb-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-800 transition-all"
+    >
+      <div className="flex gap-4 mb-3">
+        {/* ✅ AVATAR */}
+        <div className="flex-shrink-0">
+          {c.avatar_url ? (
+            <img 
+              src={c.avatar_url} 
+              alt={c.full_name || "User"} 
+              className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200 dark:border-indigo-700"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-indigo-200 dark:border-indigo-700">
+              {(c.full_name || c.author || "?").charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* CONTENT */}
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <p className="font-bold text-gray-900 dark:text-gray-100">
+                  {c.full_name || c.author || "Anonymous"}
+                </p>
+                {c.role && getRoleBadge(c.role)}
               </div>
-
-              {/* Preview Modal */}
-              {previewOpen && previewUrl && modalMounted && (
-                <div
-                  onClick={closePreview}
-                  className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-                >
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative w-full h-full flex items-center justify-center"
-                  >
-                    <button
-                      onClick={closePreview}
-                      className="absolute top-4 right-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-full p-2 z-50 shadow-lg"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    {previewType === "image" && (
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                      />
-                    )}
-
-                    {previewType === "video" && (
-                      <div className="bg-black rounded-lg overflow-hidden shadow-2xl">
-                        <video
-                          key={previewUrl}
-                          src={previewUrl}
-                          controls
-                          playsInline
-                          autoPlay
-                          muted
-                          crossOrigin="anonymous"
-                          preload="metadata"
-                          style={{
-                            width: "100%",
-                            maxWidth: "90vw",
-                            maxHeight: "80vh",
-                            backgroundColor: "black",
-                            objectFit: "contain",
-                          }}
-                          onError={(e) => console.error("Video failed to load:", e)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                {c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}
+              </p>
+            </div>
+            
+            {/* DELETE BUTTON */}
+            <button 
+              onClick={() => handleDeleteComment(c.id)} 
+              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-lg transition-all flex-shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* COMMENT TEXT */}
+          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+            {c.content}
+          </p>
+        </div>
+      </div>
+    </div>
+  )) : (
+    <p className="text-center text-gray-400 dark:text-gray-500 py-12">
+      No comments yet
+    </p>
+  )}
+</div>
             </div>
 
             {/* Sidebar */}
@@ -847,6 +824,56 @@ export default function BugDetailClient({
           </div>
         </div>
       </div>
+      {/* Preview Modal */}
+              {previewOpen && previewUrl && modalMounted && (
+                <div
+                  onClick={closePreview}
+                  className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full h-full flex items-center justify-center"
+                  >
+                    <button
+                      onClick={closePreview}
+                      className="absolute top-4 right-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-full p-2 z-50 shadow-lg"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
+                    {previewType === "image" && (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                      />
+                    )}
+
+                    {previewType === "video" && (
+                      <div className="bg-black rounded-lg overflow-hidden shadow-2xl">
+                        <video
+                          key={previewUrl}
+                          src={previewUrl}
+                          controls
+                          playsInline
+                          autoPlay
+                          muted
+                          crossOrigin="anonymous"
+                          preload="metadata"
+                          style={{
+                            width: "100%",
+                            maxWidth: "90vw",
+                            maxHeight: "80vh",
+                            backgroundColor: "black",
+                            objectFit: "contain",
+                          }}
+                          onError={(e) => console.error("Video failed to load:", e)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
     </ClientConnectionHandler>
   );
 }
