@@ -1,4 +1,4 @@
-import { Bug } from "@/types";
+import { Bug } from "@/lib/bugs";
 
 
 interface Props {
