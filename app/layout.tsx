@@ -1,5 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
+import BottomNav from "@/components/BottomNav";
 import { ThemeProvider } from "next-themes";
 import { ToastProvider } from "@/components/ui/use-toast";
 
