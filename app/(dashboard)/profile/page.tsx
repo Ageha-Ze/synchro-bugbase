@@ -3,6 +3,8 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export default async function ProfilePage() {
   const supabase = await supabaseServer();
   
@@ -22,9 +24,14 @@ export default async function ProfilePage() {
     .single();
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">User Profile</h1>
-      <ProfileClient profile={profile} userId={user.id} userEmail={user.email || ""} />
-    </div>
+<div className="max-w-screen-xl mx-auto px-1 py-10">
+
+    <ProfileClient
+      profile={profile}
+      userId={user.id}
+      userEmail={user.email ?? ""}
+    />
+  </div>
+
   );
 }
