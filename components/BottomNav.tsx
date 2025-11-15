@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, FolderKanban, Bug, Sun, Moon, BarChart3 } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderKanban, Bug, Sun, Moon, BarChart3, User } from "lucide-react"; // ✅ Tambah User
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -49,6 +49,7 @@ export default function BottomNav() {
     router.prefetch("/projects");
     router.prefetch("/all-bugs");
     router.prefetch("/reports");
+    router.prefetch("/profile"); // ✅ Tambah prefetch profile
   }, [router]);
 
   const isActive = (route: string) =>
@@ -95,33 +96,34 @@ export default function BottomNav() {
         Synchro BugBase
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - ✅ Sekarang 5 items */}
       <div className="flex justify-around w-full pb-1">
 
-        <Link href="/dashboard" className={`flex flex-col items-center ${isActive("/dashboard")} hover:text-indigo-600`}>
+        <Link href="/dashboard" className={`flex flex-col items-center ${isActive("/dashboard")} hover:text-indigo-600 dark:hover:text-indigo-400`}>
           <LayoutDashboard className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Dashboard</span>
         </Link>
 
-        <Link href="/projects" className={`flex flex-col items-center ${isActive("/projects")} hover:text-indigo-600`}>
+        <Link href="/projects" className={`flex flex-col items-center ${isActive("/projects")} hover:text-indigo-600 dark:hover:text-indigo-400`}>
           <FolderKanban className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Projects</span>
         </Link>
 
-        <Link href="/all-bugs" className={`flex flex-col items-center ${isActive("/all-bugs")} hover:text-indigo-600`}>
+        <Link href="/all-bugs" className={`flex flex-col items-center ${isActive("/all-bugs")} hover:text-indigo-600 dark:hover:text-indigo-400`}>
           <Bug className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">All Bugs</span>
         </Link>
 
-        <Link href="/reports" className={`flex flex-col items-center ${isActive("/reports")} hover:text-indigo-600`}>
+        <Link href="/reports" className={`flex flex-col items-center ${isActive("/reports")} hover:text-indigo-600 dark:hover:text-indigo-400`}>
           <BarChart3 className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Reports</span>
         </Link>
 
-        <Link href="/profile" className={`flex flex-col items-center ${isActive("/profile")} hover:text-indigo-600`}>
-  <User className="w-5 h-5" />
+        {/* ✅ TOMBOL PROFILE BARU */}
+        <Link href="/profile" className={`flex flex-col items-center ${isActive("/profile")} hover:text-indigo-600 dark:hover:text-indigo-400`}>
+          <User className="w-5 h-5" />
           <span className="text-[10px] mt-0.5">Profile</span>
-</Link>
+        </Link>
 
       </div>
     </nav>
