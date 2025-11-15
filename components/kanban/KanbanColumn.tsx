@@ -1,6 +1,5 @@
-import { Database } from '@/database.types'; // ✅ Import types
+import { Bug } from "@/lib/bugs";
 
-type Bug = Database['public']['Tables']['bugs']['Row']; 
 
 interface Props {
   title: string;
