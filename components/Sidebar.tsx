@@ -157,5 +157,6 @@ const { theme, setTheme } = useTheme();
       {loading ? "Logging out..." : "Logout"}
     </button>
   </nav>
+     </aside>
   );
 }
