@@ -428,7 +428,7 @@ export default function ProjectBugsClient({
                     key={i}
                     value={value}
                     onChange={onChange}
-                    className="flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 dark:border-gray-600 rounded-lg bg-indigo-50/50 dark:bg-gray-700/30 text-slate-700 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
+                    className="table-select flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 dark:border-gray-600 rounded-lg bg-indigo-50/50 dark:bg-gray-700/30 text-slate-700 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
                   >
                     {options.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -466,7 +466,7 @@ export default function ProjectBugsClient({
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-indigo-100 dark:divide-gray-700 transition-colors duration-300">
+            <tbody className="divide-y divide-indigo-100 dark:divide-gray-700 tbody-dark-black transition-colors duration-300">
               {filteredBugs.length > 0 ? (
                 filteredBugs.map((bug, index) => (
                   <tr
