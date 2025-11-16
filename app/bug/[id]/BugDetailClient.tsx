@@ -110,11 +110,23 @@ export default function BugDetailClient({
         const [bugResult, attachmentsResult, commentsRaw] = await Promise.all([
           supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
           supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
-          supabase
-            .from("comments")
-            .select("*")
-            .eq("bug_id", initialBug.id)
-            .order("created_at", { ascending: false }),
+         supabase
+  .from("comments")
+  .select(`
+    id,
+    bug_id,
+    content,
+    created_at,
+    user_id,
+    profiles:user_id (
+      full_name,
+      role,
+      avatar_url
+    )
+  `)
+  .eq("bug_id", initialBug.id)
+  .order("created_at", { ascending: false }),
+
         ]);
 
         const bugData = bugResult.data;
@@ -128,26 +140,14 @@ export default function BugDetailClient({
         }
 
         // Fetch profiles for each comment
-        const commentsWithProfiles: Comment[] = await Promise.all(
-          rawComments.map(async (comment: any) => {
-            if (comment.user_id) {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name, role, avatar_url")
-                .eq("id", comment.user_id)
-                .single();
-              
-              return {
-                ...comment,
-                full_name: profile?.full_name || null,
-                role: profile?.role || null,
-                avatar_url: profile?.avatar_url || null, // ✅ TAMBAH INI
+        const commentsWithProfiles: Comment[] =
+      (commentsRaw.data || []).map((c: any) => ({
+    ...c,
+    full_name: c.profiles?.full_name || null,
+    role: c.profiles?.role || null,
+    avatar_url: c.profiles?.avatar_url || null,
+  }));
 
-              };
-            }
-            return comment;
-          })
-        );
 
         const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
           (a: any) => {
