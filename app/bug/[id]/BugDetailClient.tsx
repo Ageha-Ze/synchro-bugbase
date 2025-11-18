@@ -141,16 +141,20 @@ export default function BugDetailClient({
 
         // Fetch profiles for each comment       
 
-const commentsWithProfiles: Comment[] =
-  (commentsResult.data || []).map((c: any) => ({
-    ...c,
-    full_name: c.profiles?.full_name ?? null,
-    role: c.profiles?.role ?? null,
-    avatar_url: c.profiles?.avatar_url ?? null,
-  }));
+const rawComments = commentsResult.data || [];
 
-commentsWithProfiles);
+const commentsWithProfiles = rawComments.map((c: any) => ({
+  id: c.id,
+  bug_id: c.bug_id,
+  content: c.content,
+  created_at: c.created_at,
+  user_id: c.user_id,
+  full_name: c.profiles?.full_name ?? null,
+  role: c.profiles?.role ?? null,
+  avatar_url: c.profiles?.avatar_url ?? null,
+}));
 
+setComments(commentsWithProfiles);
 
         const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
           (a: any) => {
