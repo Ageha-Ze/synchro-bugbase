@@ -210,6 +210,22 @@ setComments(commentsWithProfiles);
       )
       .subscribe?.();
 
+const commentChannel = supabase
+  .channel("realtime-comment-updates")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "comments",
+      filter: `bug_id=eq.${initialBug.id}`,
+    },
+    async (payload) => {
+      await fetchBugData(); // atau langsung append comment
+    }
+  )
+  .subscribe();
+
     return () => {
       if (channel && (supabase as any).removeChannel) {
         try {
