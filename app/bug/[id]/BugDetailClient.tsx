@@ -94,149 +94,145 @@ export default function BugDetailClient({
   };
 
   useEffect(() => {
-    if (!navigator.onLine) {
-      setError("You are offline. Please check your internet connection.");
-      setLoading(false);
-      return;
-    }
+  if (!navigator.onLine) {
+    setError("You are offline. Please check your internet connection.");
+    setLoading(false);
+    return;
+  }
 
-    let isMounted = true;
+  let isMounted = true;
 
-    const fetchBugData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchBugData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const [bugResult, attachmentsResult, commentsResult] = await Promise.all([
-  supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
-  supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
-  supabase
-    .from("comments")
-    .select(`
-      id,
-      bug_id,
-      content,
-      created_at,
-      user_id,
-      profiles (
-        id,
-        full_name,
-        role,
-        avatar_url
-      )
-    `)
-    .eq("bug_id", initialBug.id)
-    .order("created_at", { ascending: false }),
-]);
+      const [bugResult, attachmentsResult, commentsResult] = await Promise.all([
+        supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
+        supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
+        supabase
+          .from("comments")
+          .select(`
+            id,
+            bug_id,
+            content,
+            created_at,
+            user_id,
+            profiles (
+              full_name,
+              role,
+              avatar_url
+            )
+          `)
+          .eq("bug_id", initialBug.id)
+          .order("created_at", { ascending: false }),
+      ]);
 
-        const bugData = bugResult.data;
-        const bugError = bugResult.error;
-        const attachmentsData = attachmentsResult.data;
-        const rawComments = commentsRaw.data || [];
+      const bugData = bugResult.data;
+      const bugError = bugResult.error;
+      const attachmentsData = attachmentsResult.data;
 
-        if (bugError) {
-          console.warn("Failed to fetch main bug:", bugError);
-          if (isMounted) setError(bugError.message || "Failed to fetch bug");
-        }
+      if (bugError) {
+        console.warn("Failed to fetch main bug:", bugError);
+        if (isMounted) setError(bugError.message || "Failed to fetch bug");
+      }
 
-        // Fetch profiles for each comment       
+      // ✅ Correct raw comments
+      const rawComments = commentsResult.data || [];
 
-const rawComments = commentsResult.data || [];
+      const commentsWithProfiles = rawComments.map((c: any) => ({
+        id: c.id,
+        bug_id: c.bug_id,
+        content: c.content,
+        created_at: c.created_at,
+        user_id: c.user_id,
+        full_name: c.profiles?.full_name ?? null,
+        role: c.profiles?.role ?? null,
+        avatar_url: c.profiles?.avatar_url ?? null,
+      }));
 
-const commentsWithProfiles = rawComments.map((c: any) => ({
-  id: c.id,
-  bug_id: c.bug_id,
-  content: c.content,
-  created_at: c.created_at,
-  user_id: c.user_id,
-  full_name: c.profiles?.full_name ?? null,
-  role: c.profiles?.role ?? null,
-  avatar_url: c.profiles?.avatar_url ?? null,
-}));
-
-setComments(commentsWithProfiles);
-
-        const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
-          (a: any) => {
-            const url = a?.url ?? null;
-            if (!url) return { ...a, url: null };
-            if (typeof url === "string" && url.startsWith("http")) {
-              return { ...a, url };
-            }
-            try {
-              const res = supabase.storage.from("bug_attachments").getPublicUrl(url);
-              const publicUrl = (res as any)?.data?.publicUrl ?? url;
-              return { ...a, url: publicUrl };
-            } catch (e) {
-              return { ...a, url };
-            }
+      // attachments
+      const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
+        (a: any) => {
+          const url = a?.url ?? null;
+          if (!url) return { ...a, url: null };
+          if (typeof url === "string" && url.startsWith("http")) {
+            return { ...a, url };
           }
-        );
-
-        if (isMounted) {
-          const mergedBug: BugWithAttachments = {
-            ...(bugData ?? initialBug),
-            attachments: attachmentsWithPublicUrl,
-          };
-
-          setBug(mergedBug);
-          setFormData(mergedBug);
-          setComments(commentsWithProfiles);
+          try {
+            const res = supabase.storage.from("bug_attachments").getPublicUrl(url);
+            const publicUrl = (res as any)?.data?.publicUrl ?? url;
+            return { ...a, url: publicUrl };
+          } catch (e) {
+            return { ...a, url };
+          }
         }
-      } catch (err: any) {
-        console.error("Failed to fetch bug data:", err);
-        if (isMounted) setError(err?.message || "Failed to fetch bug data");
-      } finally {
-        if (isMounted) setLoading(false);
+      );
+
+      if (isMounted) {
+        const mergedBug: BugWithAttachments = {
+          ...(bugData ?? initialBug),
+          attachments: attachmentsWithPublicUrl,
+        };
+
+        setBug(mergedBug);
+        setFormData(mergedBug);
+        setComments(commentsWithProfiles);
       }
-    };
-
-    fetchBugData();
-
-    const channel = (supabase as any)
-      .channel?.("realtime-bug-updates")
-      .on?.(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bugs",
-          filter: `id=eq.${initialBug.id}`,
-        },
-        async (payload: any) => {
-          console.log("Realtime payload:", payload);
-          await fetchBugData();
-        }
-      )
-      .subscribe?.();
-
-const commentChannel = supabase
-  .channel("realtime-comment-updates")
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "comments",
-      filter: `bug_id=eq.${initialBug.id}`,
-    },
-    async (payload) => {
-      await fetchBugData(); // atau langsung append comment
+    } catch (err: any) {
+      console.error("Failed to fetch bug data:", err);
+      if (isMounted) setError(err?.message || "Failed to fetch bug data");
+    } finally {
+      if (isMounted) setLoading(false);
     }
-  )
-  .subscribe();
+  };
 
-    return () => {
-      if (channel && (supabase as any).removeChannel) {
-        try {
-          (supabase as any).removeChannel(channel);
-        } catch (e) {
-          // ignore
-        }
+  fetchBugData();
+
+  // 🔥 Realtime for BUGS
+  const bugChannel = supabase
+    .channel("realtime-bug-updates")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "bugs",
+        filter: `id=eq.${initialBug.id}`,
+      },
+      async () => {
+        await fetchBugData();
       }
-      isMounted = false;
-    };
-  }, [initialBug.id]);
+    )
+    .subscribe();
+
+  // 🔥 Realtime for COMMENTS
+  const commentChannel = supabase
+    .channel("realtime-comment-updates")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "comments",
+        filter: `bug_id=eq.${initialBug.id}`,
+      },
+      async () => {
+        await fetchBugData();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    isMounted = false;
+    try {
+      supabase.removeChannel(bugChannel);
+      supabase.removeChannel(commentChannel);
+    } catch (e) {
+      // ignore
+    }
+  };
+}, [initialBug.id]);
 
   const closePreview = () => {
     if (previewType === "video") {
