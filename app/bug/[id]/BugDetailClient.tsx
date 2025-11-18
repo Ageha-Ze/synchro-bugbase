@@ -107,12 +107,9 @@ export default function BugDetailClient({
         setLoading(true);
         setError(null);
 
-        const [bugResult, attachmentsResult, commentsRaw] = await Promise.all([
+        const [bugResult, attachmentsResult, commentsResult] = await Promise.all([
   supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
-
   supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
-
-  // 🔥 Yang benar
   supabase
     .from("comments")
     .select(`
@@ -122,6 +119,7 @@ export default function BugDetailClient({
       created_at,
       user_id,
       profiles (
+        id,
         full_name,
         role,
         avatar_url
