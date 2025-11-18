@@ -141,15 +141,15 @@ export default function BugDetailClient({
           if (isMounted) setError(bugError.message || "Failed to fetch bug");
         }
 
-        // Fetch profiles for each comment
-        const commentsWithProfiles: Comment[] =
-      (commentsRaw.data || []).map((c: any) => ({
-    ...c,
-    full_name: c.profiles?.full_name || null,
-    role: c.profiles?.role || null,
-    avatar_url: c.profiles?.avatar_url || null,
-  }));
+        // Fetch profiles for each comment       
 
+const commentsWithProfiles: Comment[] =
+  (commentsResult.data || []).map((c: any) => ({
+    ...c,
+    full_name: c.profiles?.full_name ?? null,
+    role: c.profiles?.role ?? null,
+    avatar_url: c.profiles?.avatar_url ?? null,
+  }));
 
         const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
           (a: any) => {
