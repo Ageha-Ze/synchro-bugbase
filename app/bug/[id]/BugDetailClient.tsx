@@ -151,6 +151,9 @@ const commentsWithProfiles: Comment[] =
     avatar_url: c.profiles?.avatar_url ?? null,
   }));
 
+commentsWithProfiles);
+
+
         const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map(
           (a: any) => {
             const url = a?.url ?? null;
