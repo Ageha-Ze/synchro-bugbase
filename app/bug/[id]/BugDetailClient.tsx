@@ -379,10 +379,10 @@ export default function BugDetailClient({
 
     // 🔹 Data komentar yang akan disimpan
     const commentData = {
-      bug_id: bug.id,
-      content: newComment.trim(),
-      user_id: userId,
-    };
+  bug_id: bug.id,
+  content: newComment.trim(),
+  author: userId,  // <- wajib ada
+};
 
     console.log("Inserting comment:", commentData);
 
