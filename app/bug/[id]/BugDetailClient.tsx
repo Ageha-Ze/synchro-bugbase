@@ -93,47 +93,50 @@ export default function BugDetailClient({
   };
 
   // 🔥 FUNGSI FETCH COMMENTS
-  const fetchComments = async () => {
-    try {
-      const { data: commentsData, error: commentsError } = await supabase
-        .from("comments")
-        .select(`
-          id,
-          bug_id,
-          content,
-          created_at,
-          user_id,
-          profiles:user_id (
-            full_name,
-            role,
-            avatar_url
-          )
-        `)
-        .eq("bug_id", initialBug.id)
-        .order("created_at", { ascending: false });
+const fetchComments = async () => {
+  try {
+    const { data: commentsData, error: commentsError } = await supabase
+      .from("comments")
+      .select(`
+        id,
+        bug_id,
+        content,
+        created_at,
+        author,
+        user_id,
+        profiles:user_id (
+          full_name,
+          role,
+          avatar_url
+        )
+      `)
+      .eq("bug_id", initialBug.id)
+      .order("created_at", { ascending: false });
 
-      if (commentsError) {
-        console.error("Failed to fetch comments:", commentsError);
-        return;
-      }
-
-      const commentsWithProfiles: Comment[] = (commentsData || []).map((c: any) => ({
-        id: c.id,
-        bug_id: c.bug_id,
-        content: c.content,
-        created_at: c.created_at,
-        user_id: c.user_id,
-        full_name: c.profiles?.full_name || null,
-        role: c.profiles?.role || null,
-        avatar_url: c.profiles?.avatar_url || null,
-      }));
-
-      console.log("✅ Comments fetched:", commentsWithProfiles);
-      setComments(commentsWithProfiles);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
+    if (commentsError) {
+      console.error("Failed to fetch comments:", commentsError);
+      return;
     }
-  };
+
+    const commentsWithProfiles: Comment[] = (commentsData || []).map((c: any) => ({
+      id: c.id,
+      bug_id: c.bug_id,
+      content: c.content,
+      created_at: c.created_at,
+      author: c.author || null,
+      user_id: c.user_id || null,
+      full_name: c.profiles?.full_name || null,
+      role: c.profiles?.role || null,
+      avatar_url: c.profiles?.avatar_url || null,
+    }));
+
+    console.log("✅ Comments fetched:", commentsWithProfiles);
+    setComments(commentsWithProfiles);
+  } catch (err) {
+    console.error("Error fetching comments:", err);
+  }
+};
+
 
   useEffect(() => {
     if (!navigator.onLine) {
