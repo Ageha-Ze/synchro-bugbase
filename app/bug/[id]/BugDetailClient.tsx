@@ -91,8 +91,53 @@ export default function BugDetailClient({
     setPreviewUrl(url);
     setPreviewOpen(true);
   };
+const fetchBugData = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-  // 🔥 FUNGSI FETCH COMMENTS
+    // ambil user
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user?.id) setCurrentUserId(userData.user.id);
+
+    // ambil bug
+    const { data: bugData, error: bugError } = await supabase
+      .from("bugs")
+      .select("*")
+      .eq("id", initialBug.id)
+      .single();
+
+    if (bugError) throw bugError;
+
+    // ambil attachments
+    const { data: attachmentsData, error: attachmentsError } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("bug_id", initialBug.id);
+
+    if (attachmentsError) console.warn("Attachments fetch error:", attachmentsError);
+
+    const attachmentsWithPublicUrl: Attachment[] = (attachmentsData || []).map((a: any) => {
+      if (!a.url) return { ...a, url: null };
+      if (typeof a.url === "string" && a.url.startsWith("http")) return { ...a, url: a.url };
+      const res = supabase.storage.from("bug_attachments").getPublicUrl(a.url);
+      return { ...a, url: (res as any)?.data?.publicUrl ?? a.url };
+    });
+
+    // update state bug
+    setBug({ ...(bugData ?? initialBug), attachments: attachmentsWithPublicUrl });
+
+    // fetch comments terpisah
+    await fetchComments();
+  } catch (err: any) {
+    console.error("Fetch bug error:", err);
+    setError(err?.message || "Failed to fetch bug");
+  } finally {
+    setLoading(false);
+  }
+};
+
+// FETCH COMMENTS
 const fetchComments = async () => {
   try {
     const { data: commentsData, error: commentsError } = await supabase
@@ -118,26 +163,23 @@ const fetchComments = async () => {
       return;
     }
 
-    const commentsWithProfiles: Comment[] = (commentsData || []).map((c: any) => ({
-      id: c.id,
-      bug_id: c.bug_id,
-      content: c.content,
-      created_at: c.created_at,
-      author: c.author || null,
-      user_id: c.user_id || null,
-      full_name: c.profiles?.full_name || null,
-      role: c.profiles?.role || null,
-      avatar_url: c.profiles?.avatar_url || null,
-    }));
-
-    console.log("✅ Comments fetched:", commentsWithProfiles);
-    setComments(commentsWithProfiles);
+    setComments(
+      (commentsData || []).map((c: any) => ({
+        id: c.id,
+        bug_id: c.bug_id,
+        content: c.content,
+        created_at: c.created_at,
+        author: c.author || null,
+        user_id: c.user_id || null,
+        full_name: c.profiles?.full_name || null,
+        role: c.profiles?.role || null,
+        avatar_url: c.profiles?.avatar_url || null,
+      }))
+    );
   } catch (err) {
     console.error("Error fetching comments:", err);
   }
 };
-
-
   useEffect(() => {
     if (!navigator.onLine) {
       setError("You are offline. Please check your internet connection.");
