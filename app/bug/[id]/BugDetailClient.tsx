@@ -341,97 +341,77 @@ export default function BugDetailClient({
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    
-    try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error("Auth error:", authError);
-        alert("Authentication error: " + authError.message);
-        return;
-      }
+  if (!newComment.trim()) return;
 
-      const user = authData?.user;
-      console.log("Current user:", user?.email, user?.id);
-
-      // Prepare comment data - JANGAN gunakan user_id jika kolom belum dikenali
-      const commentData: any = {
-        bug_id: bug.id,
-        content: newComment.trim(),
-        user_id: user?.id,   // 🔥 FIX PALING PENTING
-
-      };
-
-      console.log("Inserting comment data:", commentData);
-
-      const { data: newCommentData, error: insertError } = await supabase
-        .from("comments")
-        .insert([commentData])
-        .select("*, profiles(email)")
-        .single();
-
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        throw new Error(insertError.message || "Failed to insert comment");
-      }
-
-      if (!newCommentData) {
-        throw new Error("No data returned from insert");
-      }
-
-      console.log("Comment inserted:", newCommentData);
-
-      // Fetch profile for the new comment
-      let commentWithProfile: Comment = {
-        ...newCommentData,
-        full_name: null,
-        role: null,
-        avatar_url: null, // ✅ TAMBAH INI
-
-      };
-
-      if (user?.id) {
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("full_name, role, avatar_url")
-            .eq("id", user.id)
-            .single();
-          
-          if (profileError) {
-            console.warn("Profile fetch error:", profileError);
-          } else if (profile) {
-            commentWithProfile = {
-              ...newCommentData,
-              full_name: profile.full_name || null,
-              role: profile.role || null,
-              avatar_url: profile.avatar_url || null, // ✅ TAMBAH INI
-
-            };
-            console.log("Profile fetched:", profile);
-          }
-        } catch (profileError) {
-          console.warn("Failed to fetch profile:", profileError);
-        }
-      }
-
-      setComments((prev) => [commentWithProfile, ...prev]);
-      setNewComment("");
-      console.log("Comment added successfully!");
-      
-    } catch (err: any) {
-      console.error("Comment error details:", {
-        message: err?.message,
-        code: err?.code,
-        details: err?.details,
-        hint: err?.hint,
-        full: err
-      });
-      alert("Failed to add comment: " + (err?.message || JSON.stringify(err) || "Unknown error"));
+  try {
+    // 🔹 Ambil user
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      alert("Authentication error: " + authError.message);
+      return;
     }
-  };
 
+    const user = authData?.user;
+    const userId = user?.id;
+    if (!userId) {
+      alert("User not logged in.");
+      return;
+    }
+
+    // 🔹 Data komentar yang akan disimpan
+    const commentData = {
+      bug_id: bug.id,
+      content: newComment.trim(),
+      user_id: userId,
+    };
+
+    console.log("Inserting comment:", commentData);
+
+    // 🔹 Insert & ambil data lengkap
+    const { data: inserted, error: insertError } = await supabase
+      .from("comments")
+      .insert([commentData])
+      .select(`
+        id,
+        bug_id,
+        content,
+        created_at,
+        user_id
+      `)
+      .single();
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw insertError;
+    }
+
+    console.log("Comment inserted:", inserted);
+
+    // 🔹 Ambil profil user (fullname, role, avatar)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role, avatar_url")
+      .eq("id", userId)
+      .single();
+
+    // 🔹 Gabungkan komentar + profil
+    const commentWithProfile: Comment = {
+      ...inserted,
+      full_name: profile?.full_name ?? null,
+      role: profile?.role ?? null,
+      avatar_url: profile?.avatar_url ?? null,
+    };
+
+    // 🔹 Update state
+    setComments((prev) => [commentWithProfile, ...prev]);
+    setNewComment("");
+
+    console.log("Comment added successfully!");
+  } catch (err: any) {
+    console.error("Comment error:", err);
+    alert("Failed to add comment: " + (err.message || "Unknown error"));
+  }
+};
   const handleDeleteComment = async (id: string) => {
     if (!confirm("Delete this comment?")) return;
     try {
