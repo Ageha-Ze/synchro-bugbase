@@ -108,26 +108,28 @@ export default function BugDetailClient({
         setError(null);
 
         const [bugResult, attachmentsResult, commentsRaw] = await Promise.all([
-          supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
-          supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
-         supabase
-  .from("comments")
-  .select(`
-    id,
-    bug_id,
-    content,
-    created_at,
-    user_id,
-    profiles:user_id (
-      full_name,
-      role,
-      avatar_url
-    )
-  `)
-  .eq("bug_id", initialBug.id)
-  .order("created_at", { ascending: false }),
+  supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
 
-        ]);
+  supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
+
+  // 🔥 Yang benar
+  supabase
+    .from("comments")
+    .select(`
+      id,
+      bug_id,
+      content,
+      created_at,
+      user_id,
+      profiles (
+        full_name,
+        role,
+        avatar_url
+      )
+    `)
+    .eq("bug_id", initialBug.id)
+    .order("created_at", { ascending: false }),
+]);
 
         const bugData = bugResult.data;
         const bugError = bugResult.error;
