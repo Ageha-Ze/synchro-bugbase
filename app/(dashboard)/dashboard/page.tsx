@@ -32,10 +32,10 @@ const supabase = await supabaseServer();
   ] = await Promise.all([
     supabase.from("projects").select("id"),
     supabase.from("bugs").select("*", { count: "exact", head: true }),
-    supabase.from("bugs").select("*", { count: "exact", head: true }).in("status", ["New", "Open", "Blocked"]),
+    supabase.from("bugs").select("*", { count: "exact", head: true }).in("status", ["New", "Open", "Blocked", "In Progress", "Unresolved"]),
     supabase.from("bugs").select("*", { count: "exact", head: true }).in("result", ["Confirmed", "Closed"]),
     supabase.from("bugs").select("*").order("bug_number", { ascending: false }).limit(5),
-    supabase.from("bugs").select("severity").in("status", ["New", "Open", "Blocked"]),
+    supabase.from("bugs").select("severity"),
     supabase.from("projects").select("id, name, project_number")
   ]);
 
@@ -148,50 +148,10 @@ const supabase = await supabaseServer();
         </div>
 
         {/* Stats & Recent Bugs */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Severity Chart */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
-              Open Bugs by Severity
-            </h2>
-
-            <div className="space-y-4">
-              {Object.entries(severityCounts).length > 0 ? (
-                Object.entries(severityCounts)
-                  .sort(([, a], [, b]) => (b as number) - (a as number))
-                  .map(([severity, count]) => (
-                    <div
-                      key={severity}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${getSeverityColor(severity)}`}></div>
-                        <span className="text-sm text-gray-700 dark:text-gray-300">{severity}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 sm:w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full bg-gradient-to-r ${getSeverityColor(severity)}`}
-                            style={{ width: `${((count as number) / (stats.openBugs || 1)) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-6 text-right">{count as number}</span>
-                      </div>
-                    </div>
-                  ))
-              ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <CheckCircle className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No open bugs 🎉</p>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="space-y-6">
 
           {/* Recent Bugs */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                 <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
@@ -260,10 +220,51 @@ const supabase = await supabaseServer();
               )}
             </div>
           </div>
+
+          {/* Severity Chart */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
+              <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
+              Open Bugs by Severity
+            </h2>
+
+            <div className="space-y-4">
+              {Object.entries(severityCounts).length > 0 ? (
+                Object.entries(severityCounts)
+                  .sort(([, a], [, b]) => (b as number) - (a as number))
+                  .map(([severity, count]) => {
+                    const percentage =
+                      stats.totalBugs > 0 ? ((count as number) / stats.totalBugs * 100).toFixed(1) : "0";
+
+                    return (
+                      <div key={severity}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{severity}</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {count} ({percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                          <div
+                            className={`h-3 rounded-full bg-gradient-to-r ${getSeverityColor(severity)}`}
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <CheckCircle className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No open bugs 🎉</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Bug Trend Chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md overflow-hidden">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
             <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
             Bug Trend (Last 30 Days)
