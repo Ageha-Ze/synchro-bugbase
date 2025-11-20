@@ -25,17 +25,17 @@ const supabase = await supabaseServer();
     { data: allProjectsData },
     { count: bugCount },
     { count: openCount },
-    { count: closedCount },
+    { count: resolvedCount },
     { data: bugsData },
     { data: severityStats },
     { data: allProjects }
   ] = await Promise.all([
     supabase.from("projects").select("id"),
     supabase.from("bugs").select("*", { count: "exact", head: true }),
-    supabase.from("bugs").select("*", { count: "exact", head: true }).in("status", ["New", "Open", "Blocked", "In Progress", "Unresolved"]),
-    supabase.from("bugs").select("*", { count: "exact", head: true }).in("result", ["Confirmed", "Closed"]),
+    supabase.from("bugs").select("*", { count: "exact", head: true }).in("status", ["New", "Open", "Blocked", "In Progress"]),
+    supabase.from("bugs").select("*", { count: "exact", head: true }).in("status", ["Fixed", "Will Not Fix"]),
     supabase.from("bugs").select("*").order("bug_number", { ascending: false }).limit(5),
-    supabase.from("bugs").select("severity"),
+    supabase.from("bugs").select("severity").in("status", ["New", "Open", "Blocked", "In Progress"]),
     supabase.from("projects").select("id, name, project_number")
   ]);
 
@@ -58,7 +58,7 @@ const supabase = await supabaseServer();
     projects: allProjectsData?.length ?? 0,
     totalBugs: bugCount ?? 0,
     openBugs: openCount ?? 0,
-    closedBugs: closedCount ?? 0,
+    resolved: resolvedCount ?? 0,
   };
 
   const getSeverityColor = (severity: string) => {
@@ -133,7 +133,7 @@ const supabase = await supabaseServer();
                 ["Total Projects", stats.projects],
                 ["Total Bugs", stats.totalBugs],
                 ["Open Bugs", stats.openBugs],
-                ["Resolved", stats.closedBugs],
+                ["Resolved", stats.resolved],
               ].map(([label, value]) => (
                 <div
                   key={label}
