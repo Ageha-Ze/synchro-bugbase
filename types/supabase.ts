@@ -489,7 +489,8 @@ export type Database = {
         | "Fixed"
         | "To Fix in Update"
         | "Will Not Fix"
-        | "In Progress";
+        | "In Progress"
+        | "Unresolved";
       user_role: "QA" | "Developer" | "Manager";
     };
     CompositeTypes: { [_ in never]: never };
