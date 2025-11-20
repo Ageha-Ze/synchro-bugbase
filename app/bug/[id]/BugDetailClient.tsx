@@ -249,28 +249,54 @@ setComments(commentsData as unknown as CommentWithProfile[]);
   /**
    * Save bug update
    */
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { attachments, result, project_number, ...safeFormData } = formData;
-      const safeResult = result && String(result).trim() !== "" ? result : "To-Do";
-
-      const upd = await supabase.from("bugs").update({ ...safeFormData, result: safeResult }).eq("id", bug.id);
-      if (upd.error) throw upd.error;
-
-      setBug((prev) => ({ ...prev, ...safeFormData, result: safeResult, attachments: prev.attachments || [] }));
-
-      setEditing(false);
-      router.push(`/projects/${projectId}`);
-      router.refresh();
-    } catch (err: any) {
-      console.error(err);
-      alert("Failed to update bug: " + (err?.message || "Unknown error"));
-    } finally {
-      setSaving(false);
+// Tidak perlu ubah code client, langsung test
+const handleSave = async () => {
+  setSaving(true);
+  try {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData?.user) {
+      alert("You must be logged in to update bugs");
+      return;
     }
-  };
 
+    const updateData = {
+      title: formData.title,
+      description: formData.description,
+      steps_to_reproduce: formData.steps_to_reproduce,
+      expected_result: formData.expected_result,
+      actual_result: formData.actual_result,
+      status: formData.status,
+      severity: formData.severity,
+      priority: formData.priority,
+      result: formData.result?.trim() ? formData.result : "To-Do",
+      assigned_to: formData.assigned_to,
+    };
+
+    const { data, error } = await supabase
+      .from("bugs")
+      .update(updateData)
+      .eq("id", bug.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Update error:", error);
+      throw error;
+    }
+
+    console.log("✅ Updated successfully:", data);
+
+    await fetchBugAndComments();
+    setEditing(false);
+    alert("Bug updated successfully!");
+    
+  } catch (err: any) {
+    console.error("Failed to update bug:", err);
+    alert("Failed to update bug: " + (err?.message || "Unknown error"));
+  } finally {
+    setSaving(false);
+  }
+};
   /**
    * Attachments handlers
    */
@@ -613,6 +639,48 @@ setComments((prev) => [
                 {/* Attachments */}
                 <div>
                   <label className="block text-sm font-bold mb-2 text-gray-800 dark:text-gray-100">Attachments</label>
+                  {/* Form tambah attachment saat editing */}
+  {editing && (
+    <div className="flex flex-col sm:flex-row gap-2 mb-4">
+      <select
+        value={newAttachment.type}
+        onChange={(e) => setNewAttachment((prev) => ({ ...prev, type: e.target.value }))}
+        className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+      >
+        <option value="link">Link</option>
+        <option value="image">Image</option>
+        <option value="video">Video</option>
+      </select>
+
+      {newAttachment.type === "link" ? (
+        <>
+          <input
+            type="text"
+            placeholder="Enter URL..."
+            value={newAttachment.url}
+            onChange={(e) => setNewAttachment((prev) => ({ ...prev, url: e.target.value }))}
+            className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 flex-1 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+          />
+          <Button
+            onClick={handleAddAttachment}
+            className="bg-indigo-600 text-white"
+            disabled={!newAttachment.url.trim()}
+          >
+            Add
+          </Button>
+        </>
+      ) : (
+        <input
+          type="file"
+          accept={newAttachment.type === "image" ? "image/*" : "video/*"}
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0]);
+          }}
+          className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+        />
+      )}
+    </div>
+  )}
                   {bug.attachments?.length ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {bug.attachments!.map((a) => (
@@ -662,7 +730,6 @@ setComments((prev) => [
                               </a>
                             </div>
                           )}
-
                           {editing && (
                             <button
                               onClick={() => handleDeleteAttachment(a.id)}
