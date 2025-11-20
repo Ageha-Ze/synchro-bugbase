@@ -54,7 +54,11 @@ interface Attachment {
 
 interface BugWithAttachments extends Bug {
   attachments?: Attachment[];
-  project_number?: string | number | null;
+  project: {
+    id: string;
+    name: string;
+    project_number: string | number | null;
+  } | null;
 }
 
 interface BugDetailClientProps {
@@ -147,7 +151,14 @@ export default function BugDetailClient({
 
       // fetch bug + attachments + comments in parallel
       const [bugRes, attachmentsRes, commentsRes] = await Promise.all([
-        supabase.from("bugs").select("*").eq("id", initialBug.id).single(),
+        supabase.from("bugs").select(`
+          *,
+          project:projects!fk_project (
+            id,
+            name,
+            project_number
+          )
+        `).eq("id", initialBug.id).single(),
         supabase.from("attachments").select("*").eq("bug_id", initialBug.id),
         supabase
           .from("comments")
@@ -595,12 +606,18 @@ setComments((prev) => [
                     <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                       {bug.bug_number ? (
                         <span className="text-indigo-600 dark:text-indigo-400">
-                          SCB-{bug.project_number ?? "01"}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
+                          SCB-{String(bug.project?.project_number ?? 1).padStart(2, "0")}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
                         </span>
                       ) : null}
                       {bug.title}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">{bug.description}</p>
+                    {bug.project && (
+                      <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-1">
+                        <span className="font-medium">Project:</span>
+                        <span>{bug.project.name}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-2">
                       <Calendar className="w-4 h-4" /> Created:{" "}
                       {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
