@@ -1,6 +1,8 @@
 import {supabaseServer} from "@/lib/supabaseServer";
 import ProjectBugsClient from "./ProjectBugsClient";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
+import Link from "next/link";
+
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -12,8 +14,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   console.log("📌 ID type:", typeof id);
   console.log("📌 ID length:", id?.length);
 
-  const supabase = await supabaseServer();
-  // Debug query
+const supabase = await supabaseServer();  // Debug query
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .select("*")
@@ -68,6 +69,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
   return (
     <ClientConnectionHandler>
+      
       <ProjectBugsClient
         projectId={project.id}
         projectNumber={project.project_number}
@@ -75,6 +77,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         projectDescription={project.description ?? ""}
         initialBugs={bugs}
       />
+
     </ClientConnectionHandler>
   );
 }

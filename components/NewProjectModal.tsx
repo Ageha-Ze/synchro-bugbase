@@ -44,7 +44,7 @@ export default function NewProjectModal({ onClose, onNewProject }: NewProjectMod
         .limit(1)
         .single();
 
-const newProjectNumber = lastProject ? (lastProject.project_number ?? 0) + 1 : 1;
+  const newProjectNumber = lastProject ? (lastProject.project_number ?? 0) + 1 : 1;
 
       const { data, error: insertError } = await supabase
         .from("projects")

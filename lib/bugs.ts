@@ -10,7 +10,7 @@ export type BugInsert = Database['public']['Tables']['bugs']['Insert'];
 export type BugUpdate = Database['public']['Tables']['bugs']['Update'];
 
 // --- Type untuk NewBug (tanpa id, untuk create) ---
-export type NewBug = Omit<Bug, 'id' | 'created_at' | 'updated_at'>;
+export type NewBug = BugInsert;
 
 // --- Attachment type ---
 export type Attachment = {

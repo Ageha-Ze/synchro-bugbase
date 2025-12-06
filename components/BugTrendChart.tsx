@@ -54,10 +54,10 @@ export default function BugTrendChart() {
   }, []);
 
   return (
-    <div className="w-full h-72">
+    <div className="w-full h-64">
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} />
@@ -66,14 +66,14 @@ export default function BugTrendChart() {
               type="monotone"
               dataKey="count"
               stroke="#6366f1"
-              strokeWidth={3}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <p className="text-gray-400 text-center pt-24">No bug data yet</p>
+        <p className="text-gray-400 text-center pt-20">No bug data yet</p>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ export default function Loading() {
       <div className="text-center">
         <div className="w-10 h-10 mx-auto mb-4 border-4 border-indigo-300 dark:border-indigo-700 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin transition-colors duration-300"></div>
         <p className="text-gray-500 dark:text-gray-300 text-sm font-medium animate-pulse transition-colors duration-300">
-          Loading Projects
+          Loading Reports...
         </p>
       </div>
     </div>

@@ -140,7 +140,7 @@ export default function NewBugModal({
         .from("bugs")
         .insert([bugData])
         .select()
-        .single();
+        .single< Bug >(); // ✅ beri generic type
 
       if (insertError) throw insertError;
       if (!insertedData) throw new Error("Failed to create bug");
@@ -218,7 +218,8 @@ export default function NewBugModal({
       handleClose();
     } catch (err: any) {
       console.error("❌ Error creating bug:", err);
-      setError(err?.message || "Failed to create bug.");
+      console.error("Error details:", JSON.stringify(err, null, 2));
+      setError(err?.message || err?.details || "Failed to create bug.");
     } finally {
       setLoading(false);
       setImageFile(null);

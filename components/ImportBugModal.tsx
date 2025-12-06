@@ -45,7 +45,7 @@ export default function ImportBugModal({
       const workbook = XLSX.read(data, { type: "array" });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
-      setPreviewData(jsonData.length > 0 ? jsonData.slice(0, 5) : []);
+      setPreviewData(jsonData);
     }
   };
 
@@ -105,15 +105,8 @@ const handleImport = async () => {
     expected_result: row.Expected_result?.toString().trim() || "",
     actual_result: row.Actual_result?.toString().trim() || "",
     project_id: projectId,
-     project: {               // ✅ tambah ini
-      id: projectId,
-      name: "Unknown",       // bisa diganti dengan nama project jika ada fetch tambahan
-      project_number: projectNumber,
-    },
     assigned_to: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: "system", // ✅ tambah created_by
+    created_by: null,
   };
 });
 
@@ -196,11 +189,13 @@ jsonData.forEach((row, i) => {
               Import Bugs from Excel / CSV
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Columns required: <br />
+              Columns: <br />
               <code>
                 Title, Description, Severity, Priority, Status, Result,
-                Steps_to_reproduce, Expected_result, Actual_result, Attachment
+                Steps_to_reproduce, Expected_result, Actual_result
               </code>
+              <br />
+              <span className="text-xs text-gray-400">(Attachment is optional)</span>
             </p>
           </div>
 
@@ -228,11 +223,11 @@ jsonData.forEach((row, i) => {
 
           {/* Preview */}
           {previewData.length > 0 && (
-            <div className="border border-indigo-100 rounded-xl p-4 mb-6 bg-indigo-50/30 overflow-x-auto">
+            <div className="border border-indigo-100 rounded-xl p-4 mb-6 bg-indigo-50/30 overflow-x-auto overflow-y-auto max-h-64">
               <div className="flex items-center gap-2 mb-3">
                 <Table className="w-5 h-5 text-indigo-600" />
                 <h3 className="font-bold text-gray-700">
-                  Preview (first 5 rows)
+                  Preview
                 </h3>
               </div>
               <table className="min-w-full text-sm text-left border border-indigo-100 rounded-lg overflow-hidden">
