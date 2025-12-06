@@ -535,10 +535,11 @@ setComments((prev) => [
             <div className="md:col-span-2 space-y-6">
               {loading && <LoaderCentered label="Fetching Data..." />}
 
-              {/* Header */}
-              <div className="pb-4 border-b-2 border-gradient-to-r from-purple-300 via-blue-300 to-pink-300">
-                <div className="flex items-center justify-between">
-                  <div>
+              {/* Header - FIXED LAYOUT */}
+              <div className="pb-4 border-b-2 border-purple-300">
+                <div className="flex flex-col gap-4">
+                  {/* Title and Project */}
+                  <div className="flex-1">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent">
                       {bug.bug_number ? (
                         <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
@@ -550,6 +551,8 @@ setComments((prev) => [
                       <p className="text-indigo-600 mt-1 font-medium">Project: {bug.project.name}</p>
                     )}
                   </div>
+
+                  {/* Buttons - Separated Row */}
                   <div className="flex gap-3">
                     <Button
                       variant="outline"
