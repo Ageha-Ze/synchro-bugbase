@@ -71,10 +71,10 @@ interface BugDetailClientProps {
  * Helper components / small utilities
  */
 const LoaderCentered = ({ label = "Loading..." }: { label?: string }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-50/90 via-blue-50/90 to-pink-50/90 backdrop-blur-sm">
     <div className="text-center space-y-2">
-      <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 dark:text-indigo-400" />
-      <p className="text-indigo-600 dark:text-indigo-400 font-semibold">{label}</p>
+      <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
+      <p className="text-indigo-600 font-semibold">{label}</p>
     </div>
   </div>
 );
@@ -260,7 +260,6 @@ setComments(commentsData as unknown as CommentWithProfile[]);
   /**
    * Save bug update
    */
-// Tidak perlu ubah code client, langsung test
 const handleSave = async () => {
   setSaving(true);
   try {
@@ -474,49 +473,49 @@ setComments((prev) => [
   const getBadgeColor = (type: string, value: string) => {
     const map: Record<string, Record<string, string>> = {
       severity: {
-        "Crash/Undoable": "bg-red-100 text-red-800 border-red-300",
-        High: "bg-orange-100 text-orange-800 border-orange-300",
-        Medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
-        Low: "bg-green-100 text-green-800 border-green-300",
-        Suggestion: "bg-blue-100 text-blue-800 border-blue-300",
+        "Crash/Undoable": "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-200",
+        High: "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-200",
+        Medium: "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-yellow-200",
+        Low: "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-200",
+        Suggestion: "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-200",
       },
       priority: {
-        Highest: "bg-red-100 text-red-800 border-red-300",
-        High: "bg-pink-100 text-pink-800 border-pink-300",
-        Medium: "bg-purple-100 text-purple-800 border-purple-300",
-        Low: "bg-blue-100 text-blue-800 border-blue-300",
+        Highest: "bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-lg shadow-red-200",
+        High: "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-200",
+        Medium: "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-200",
+        Low: "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200",
       },
       status: {
-        New: "bg-blue-100 text-blue-800 border-blue-300",
-        Open: "bg-yellow-100 text-yellow-800 border-yellow-300",
-        Blocked: "bg-red-100 text-red-800 border-red-300",
-        Fixed: "bg-green-100 text-green-800 border-green-300",
-        "To Fix in Update": "bg-indigo-100 text-indigo-800 border-indigo-300",
-        "Will Not Fix": "bg-rose-100 text-rose-800 border-rose-300",
-        "In Progress": "bg-teal-100 text-teal-800 border-teal-300",
+        New: "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-200",
+        Open: "bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg shadow-yellow-200",
+        Blocked: "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-200",
+        Fixed: "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-200",
+        "To Fix in Update": "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200",
+        "Will Not Fix": "bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg shadow-rose-200",
+        "In Progress": "bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-200",
       },
       result: {
-        Confirmed: "bg-green-100 text-green-800 border-green-300",
-        Unresolved: "bg-orange-100 text-orange-800 border-orange-300",
-        "To-Do": "bg-indigo-100 text-indigo-800 border-indigo-300",
+        Confirmed: "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-200",
+        Unresolved: "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-200",
+        "To-Do": "bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-200",
       },
     };
-    return map[type]?.[value] || "bg-gray-100 text-gray-800 border-gray-200";
+    return map[type]?.[value] || "bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg shadow-gray-200";
   };
 
   const getRoleBadge = (role: string | null | undefined) => {
     const roleColors: Record<string, string> = {
-      QA: "bg-blue-100 text-blue-800 border-blue-300",
-      Developer: "bg-purple-100 text-purple-800 border-purple-300",
-      Manager: "bg-green-100 text-green-800 border-green-300",
+      QA: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md",
+      Developer: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md",
+      Manager: "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md",
     };
 
     if (!role) return null;
 
     return (
       <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${
-          roleColors[role] || "bg-gray-100 text-gray-800 border-gray-300"
+        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+          roleColors[role] || "bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md"
         }`}
       >
         {role}
@@ -529,46 +528,58 @@ setComments((prev) => [
    */
   return (
     <ClientConnectionHandler>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
+        <div className="max-w-6xl mx-auto p-4 space-y-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Main column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="md:col-span-2 space-y-6">
               {loading && <LoaderCentered label="Fetching Data..." />}
 
               {/* Header */}
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
-                  <Button
-                    onClick={() => {
-                      router.replace(`/projects/${projectId}`);
-                      router.refresh();
-                    }}
-                    className="bg-white dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 border-2 border-indigo-200 dark:border-indigo-700 w-full sm:w-auto"
-                    size="sm"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
-                  </Button>
+              <div className="pb-4 border-b-2 border-gradient-to-r from-purple-300 via-blue-300 to-pink-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent">
+                      {bug.bug_number ? (
+                        <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                          SCB-{String(bug.project?.project_number ?? 1).padStart(2, "0")}-{String(bug.bug_number ?? 0).padStart(3, "0")}
+                        </span>
+                      ) : null} {bug.title}
+                    </h1>
+                    {bug.project && (
+                      <p className="text-indigo-600 mt-1 font-medium">Project: {bug.project.name}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        router.replace(`/projects/${projectId}`);
+                        router.refresh();
+                      }}
+                      className="border-2 border-purple-300 hover:bg-purple-50 hover:border-purple-400 transition-all"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> Back
+                    </Button>
 
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    {editing && (
+                    {editing ? (
                       <Button
+                        variant="outline"
                         onClick={() => {
                           setEditing(false);
                           setFormData(bug);
                         }}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 sm:flex-none border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                        disabled={saving}
+                        className="border-2 border-rose-300 hover:bg-rose-50 hover:border-rose-400 transition-all"
                       >
-                        <X className="w-4 h-4 mr-2" />Cancel
+                        <X className="w-4 h-4 mr-2" /> Cancel
                       </Button>
-                    )}
+                    ) : null}
+
                     <Button
                       onClick={editing ? handleSave : () => setEditing(true)}
-                      size="sm"
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg flex-1 sm:flex-none"
                       disabled={saving}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-200 transition-all"
                     >
                       {saving ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -581,210 +592,181 @@ setComments((prev) => [
                     </Button>
                   </div>
                 </div>
-
-                {/* Title & Description */}
-                {editing ? (
-                  <div className="space-y-4">
-                    <input
-                      name="title"
-                      value={(formData.title as string) || ""}
-                      onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-                      placeholder="Title"
-                    />
-                    <textarea
-                      name="description"
-                      value={(formData.description as string) || ""}
-                      onChange={handleChange}
-                      className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-                      placeholder="Bug Location"
-                      rows={2}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                      {bug.bug_number ? (
-                        <span className="text-indigo-600 dark:text-indigo-400">
-                          SCB-{String(bug.project?.project_number ?? 1).padStart(2, "0")}-{String(bug.bug_number ?? 0).padStart(3, "0")} :{" "}
-                        </span>
-                      ) : null}
-                      {bug.title}
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">{bug.description}</p>
-                    {bug.project && (
-                      <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-1">
-                        <span className="font-medium">Project:</span>
-                        <span>{bug.project.name}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 mt-2">
-                      <Calendar className="w-4 h-4" /> Created:{" "}
-                      {bug.created_at ? new Date(bug.created_at).toLocaleString("id-ID") : "—"}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Details */}
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8 space-y-6">
-                {["steps_to_reproduce", "expected_result", "actual_result"].map((f) => (
-                  <div key={f}>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                      {f.replaceAll("_", " ")}
+              {/* Title & Description in Edit Mode */}
+              {editing && (
+                <div className="border-2 border-purple-200 p-6 bg-gradient-to-br from-white to-purple-50 shadow-lg">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-purple-700 mb-2">
+                        Title <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={(formData.title as string) || ""}
+                        onChange={handleChange}
+                        placeholder="Bug title"
+                        className="w-full px-4 py-3 border-2 border-purple-200 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none transition-all bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-purple-700 mb-2">
+                        Bug Location <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="description"
+                        value={(formData.description as string) || ""}
+                        onChange={handleChange}
+                        placeholder="Where did this bug occur?"
+                        rows={2}
+                        className="w-full px-4 py-3 border-2 border-purple-200 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none resize-none transition-all bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bug Details */}
+              <div className="space-y-6">
+                {[
+                  ["Steps to Reproduce", "steps_to_reproduce", "from-blue-500 to-cyan-500"],
+                  ["Expected Result", "expected_result", "from-green-500 to-emerald-500"],
+                  ["Actual Result", "actual_result", "from-rose-500 to-pink-500"]
+                ].map(([label, field, gradient]) => (
+                  <div key={field} className="border-2 border-purple-200 p-6 bg-white shadow-lg hover:shadow-xl transition-all">
+                    <label className={`block text-sm font-semibold bg-gradient-to-r ${gradient} bg-clip-text text-transparent mb-3`}>
+                      {label} {field === "steps_to_reproduce" && <span className="text-red-500">*</span>}
                     </label>
                     {editing ? (
                       <textarea
-                        name={f}
-                        value={(formData as any)[f] || ""}
+                        name={field}
+                        value={(formData as any)[field] || ""}
                         onChange={handleChange}
-                        className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 bg-white dark:bg-neutral-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white"
                         rows={4}
+                        className="w-full px-4 py-3 border-2 border-purple-200 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none resize-none transition-all"
+                        required={field === "steps_to_reproduce"}
                       />
                     ) : (
-                      <div className="prose prose-sm max-w-none bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700 text-gray-900 dark:text-white">
-                        {(bug as any)[f] ? (
-                          (bug as any)[f].split("\n").map((line: string, i: number) => <p key={i}>{line}</p>)
+                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-4 min-h-[80px]">
+                        {(bug as any)[field] ? (
+                          <div className="text-gray-800 whitespace-pre-wrap">{(bug as any)[field]}</div>
                         ) : (
-                          <p className="text-gray-400 dark:text-gray-400 italic">No data provided</p>
+                          <div className="text-gray-400 italic">No data provided</div>
                         )}
                       </div>
                     )}
                   </div>
                 ))}
 
-                {/* Attachments */}
-                <div>
-                  <label className="block text-sm font-bold mb-2 text-gray-800 dark:text-gray-100">Attachments</label>
-                  {/* Form tambah attachment saat editing */}
-  {editing && (
-    <div className="flex flex-col sm:flex-row gap-2 mb-4">
-      <select
-        value={newAttachment.type}
-        onChange={(e) => setNewAttachment((prev) => ({ ...prev, type: e.target.value }))}
-        className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-      >
-        <option value="link">Link</option>
-        <option value="image">Image</option>
-        <option value="video">Video</option>
-      </select>
+                {/* Attachment Link */}
+                {editing && (
+                  <div className="border-2 border-indigo-200 p-6 bg-gradient-to-br from-white to-indigo-50 shadow-lg">
+                    <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                      Add Attachment Link
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter URL..."
+                        value={newAttachment.url}
+                        onChange={(e) => setNewAttachment((prev) => ({ ...prev, url: e.target.value }))}
+                        className="flex-1 px-4 py-3 border-2 border-indigo-200 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-white"
+                      />
+                      <Button
+                        onClick={handleAddAttachment}
+                        disabled={!newAttachment.url.trim()}
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200 transition-all"
+                      >
+                        Add Link
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-      {newAttachment.type === "link" ? (
-        <>
-          <input
-            type="text"
-            placeholder="Enter URL..."
-            value={newAttachment.url}
-            onChange={(e) => setNewAttachment((prev) => ({ ...prev, url: e.target.value }))}
-            className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 flex-1 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-          />
-          <Button
-            onClick={handleAddAttachment}
-            className="bg-indigo-600 text-white"
-            disabled={!newAttachment.url.trim()}
-          >
-            Add
-          </Button>
-        </>
-      ) : (
-        <input
-          type="file"
-          accept={newAttachment.type === "image" ? "image/*" : "video/*"}
-          onChange={(e) => {
-            if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0]);
-          }}
-          className="border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-2 bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
-        />
-      )}
-    </div>
-  )}
+                {/* Attachments Display */}
+                <div className="border-2 border-cyan-200 p-6 bg-white shadow-lg">
+                  <label className="block text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                    Attachments
+                  </label>
                   {bug.attachments?.length ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {bug.attachments!.map((a) => (
-                        <div
-                          key={a.id}
-                          className="relative border-2 border-indigo-100 dark:border-neutral-700 rounded-xl overflow-hidden bg-white dark:bg-neutral-900 shadow-sm hover:shadow-lg transition-all group"
-                        >
-                          {a.type === "image" && a.url && (
-                            <img
-                              src={a.url}
-                              alt="Bug Attachment"
-                              onClick={() => openPreview("image", a.url || "")}
-                              className="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 hover:scale-105"
-                            />
-                          )}
-
-                          {a.type === "video" && a.url && (
-                            <div className="relative group">
-                              <video
-                                key={a.url}
-                                src={a.url}
-                                crossOrigin="anonymous"
-                                controls
-                                playsInline
-                                onError={(e) => console.error("Video error:", e)}
-                                style={{
-                                  width: "100%",
-                                  height: "160px",
-                                  borderRadius: "0.5rem",
-                                  backgroundColor: "black",
-                                  objectFit: "cover",
-                                }}
-                                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg bg-black"
-                              />
-                            </div>
-                          )}
-
-                          {(!a.type || a.type === "link") && a.url && (
-                            <div className="p-4">
+                    <div className="grid gap-3">
+                      {bug.attachments.map((a) => (
+                        <div key={a.id} className="flex items-center gap-3 p-3 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-100 hover:border-cyan-300 transition-all">
+                          <div className="flex-shrink-0">
+                            {a.type === "image" && <span className="text-2xl">🖼️</span>}
+                            {a.type === "video" && <span className="text-2xl">🎥</span>}
+                            {(a.type === "link" || !a.type) && <span className="text-2xl">🔗</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {a.type === "image" && a.url && (
+                              <button
+                                onClick={() => openPreview("image", a.url || "")}
+                                className="text-cyan-600 hover:text-cyan-700 font-medium underline text-left"
+                              >
+                                View Image
+                              </button>
+                            )}
+                            {a.type === "video" && a.url && (
+                              <button
+                                onClick={() => openPreview("video", a.url || "")}
+                                className="text-cyan-600 hover:text-cyan-700 font-medium underline text-left"
+                              >
+                                View Video
+                              </button>
+                            )}
+                            {(a.type === "link" || !a.type) && a.url && (
                               <a
                                 href={a.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-2 break-all"
+                                className="text-cyan-600 hover:text-cyan-700 font-medium underline break-all"
                               >
-                                <LinkIcon className="w-4 h-4" /> {a.url}
+                                {a.url}
                               </a>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           {editing && (
                             <button
                               onClick={() => handleDeleteAttachment(a.id)}
-                              className="absolute top-2 right-2 bg-white dark:bg-neutral-800 border border-red-200 dark:border-red-400 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-full transition-all"
+                              className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 transition-all"
                             >
-                              <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-400 dark:text-gray-400 italic bg-gradient-to-r from-slate-50 to-indigo-50 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-5 border border-indigo-100 dark:border-neutral-700">
+                    <div className="text-gray-400 italic text-center py-8 bg-gradient-to-br from-gray-50 to-blue-50">
                       No attachments yet
-                    </p>
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Comments */}
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
-                  <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> Comments ({comments.length})
+              <div className="border-2 border-pink-200 p-6 bg-white shadow-lg">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-6 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-pink-600" />
+                  Comments ({comments.length})
                 </h2>
 
-                <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-5 border-2 border-indigo-200 dark:border-indigo-700">
+                <div className="mb-8 border-2 border-pink-200 p-4 bg-gradient-to-br from-pink-50 to-rose-50 shadow-md">
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Write a comment..."
-                    className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-xl p-4 resize-none bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
                     rows={3}
+                    className="w-full px-4 py-3 border-2 border-pink-200 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none resize-none bg-white transition-all"
                   />
                   <div className="mt-3 flex justify-end">
                     <Button
                       onClick={handleAddComment}
                       disabled={!newComment.trim()}
-                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg"
+                      className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white shadow-lg shadow-pink-200 transition-all"
                     >
                       <Send className="w-4 h-4 mr-2" /> Post Comment
                     </Button>
@@ -792,101 +774,102 @@ setComments((prev) => [
                 </div>
 
                 {comments.length > 0 ? (
-                  comments.map((c) => (
-                    <div
-                      key={c.id}
-                      className="border-2 border-indigo-100 dark:border-neutral-700 rounded-xl p-5 mb-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-800 transition-all"
-                    >
-                      <div className="flex gap-4 mb-3">
-                        {/* Avatar */}
-                        <div className="flex-shrink-0">
-                          {c.profiles?.avatar_url ? (
-                            <img
-                              src={c.profiles.avatar_url}
-                              alt={c.profiles.full_name || "User"}
-                              className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200 dark:border-indigo-700"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-indigo-200 dark:border-indigo-700">
-                              {(c.profiles?.full_name || "?").charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <p className="font-bold text-gray-900 dark:text-gray-100">
-                                  {c.profiles?.full_name || "Anonymous"}
-                                </p>
-                                {getRoleBadge(c.profiles?.role ?? null)}
+                  <div className="space-y-4">
+                    {comments.map((c) => (
+                      <div key={c.id} className="border-2 border-purple-100 p-4 bg-gradient-to-br from-white to-purple-50 shadow-md hover:shadow-lg transition-all">
+                        <div className="flex gap-3 mb-3">
+                          {/* Avatar */}
+                          <div className="flex-shrink-0">
+                            {c.profiles?.avatar_url ? (
+                              <img
+                                src={c.profiles.avatar_url}
+                                alt={c.profiles.full_name || "User"}
+                                className="w-10 h-10 object-cover ring-2 ring-purple-200"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold shadow-md">
+                                {(c.profiles?.full_name || "?").charAt(0).toUpperCase()}
                               </div>
-                              <p className="text-xs text-indigo-600 dark:text-indigo-400">
-                                {c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}
-                              </p>
-                            </div>
-
-                            <button
-                              onClick={() => handleDeleteComment(c.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-2 rounded-lg transition-all flex-shrink-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            )}
                           </div>
 
-                          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">{c.content}</p>
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-bold text-gray-900">
+                                    {c.profiles?.full_name || "Anonymous"}
+                                  </p>
+                                  {getRoleBadge(c.profiles?.role ?? null)}
+                                </div>
+                                <p className="text-sm text-indigo-600 font-medium">
+                                  {c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 transition-all"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <p className="text-gray-700 whitespace-pre-wrap">{c.content}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-center text-gray-400 dark:text-gray-500 py-12">No comments yet</p>
+                  <div className="text-center text-gray-400 py-12 bg-gradient-to-br from-gray-50 to-purple-50">
+                    No comments yet
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 dark:border-neutral-700 p-6 space-y-4">
+            <div className="md:col-span-1">
+              <div className="border-2 border-indigo-200 p-6 bg-gradient-to-br from-white to-indigo-50 shadow-lg sticky top-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Status & Priority</h2>
+                  <h2 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Status & Priority</h2>
                   {!editing && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                    <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 font-semibold">
                       Read-only
                     </span>
                   )}
                 </div>
 
-                {["status", "severity", "priority", "result"].map((k) => (
-                  <div key={k} className="pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">{k}</label>
-                    {editing ? (
-                      <select
-                        name={k}
-                        value={(formData as any)[k] ?? ""}
-                        onChange={handleChange}
-                        className="w-full border-2 border-indigo-200 dark:border-indigo-700 rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                      >
-                        {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
-                        {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold border ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
+                <div className="space-y-4">
+                  {["status", "severity", "priority", "result"].map((k) => (
+                    <div key={k}>
+                      <label className="block text-sm font-semibold text-indigo-700 mb-2 capitalize">{k}</label>
+                      {editing ? (
+                        <select
+                          name={k}
+                          value={(formData as any)[k] ?? ""}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border-2 border-indigo-200 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all bg-white"
+                        >
+                          {k === "status" && ["Open", "New", "Blocked", "Fixed", "To Fix in Update", "Will Not Fix", "In Progress"].map((v) => <option key={v} value={v}>{v}</option>)}
+                          {k === "severity" && ["Crash/Undoable", "High", "Medium", "Low", "Suggestion"].map((v) => <option key={v} value={v}>{v}</option>)}
+                          {k === "priority" && ["Highest", "High", "Medium", "Low"].map((v) => <option key={v} value={v}>{v}</option>)}
+                          {k === "result" && ["Confirmed", "Closed", "Unresolved", "To-Do"].map((v) => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      ) : (
+                        <div className={`inline-flex px-3 py-1.5 text-sm font-semibold ${getBadgeColor(k, (bug as any)[k] || "To-Do")}`}>
                           {(bug as any)[k] || "To-Do"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {editing && (
-                  <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">💡 Changes will be saved when you click "Save Changes"</p>
+                  <div className="mt-6 pt-4 border-t-2 border-indigo-200">
+                    <p className="text-xs text-indigo-600 text-center font-medium">Changes will be saved when you click "Save Changes"</p>
                   </div>
                 )}
               </div>
@@ -898,7 +881,7 @@ setComments((prev) => [
         {previewOpen && previewUrl && modalMounted && (
           <div onClick={closePreview} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
             <div onClick={(e) => e.stopPropagation()} className="relative w-full h-full flex items-center justify-center">
-              <button onClick={closePreview} className="absolute top-4 right-4 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-full p-2 z-50 shadow-lg">
+              <button onClick={closePreview} className="absolute top-4 right-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-full p-2 z-50 shadow-xl">
                 <X className="w-5 h-5" />
               </button>
 

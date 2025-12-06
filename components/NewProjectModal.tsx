@@ -77,27 +77,26 @@ export default function NewProjectModal({ onClose, onNewProject }: NewProjectMod
 
   return (
     <ClientConnectionHandler>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ${
+          !isVisible ? "opacity-0" : "opacity-100"
+        }`}
         onClick={handleClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      >
         <div
-          className={`bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto transform transition-all duration-300
-            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`bg-white rounded-lg shadow-lg w-full max-w-md transform transition-all duration-300 ${
+            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-neutral-800">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
               Create New Project
             </h2>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
               disabled={loading}
             >
               <X className="w-5 h-5" />
@@ -121,7 +120,7 @@ export default function NewProjectModal({ onClose, onNewProject }: NewProjectMod
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Awesome Project"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 disabled={loading}
                 required
               />
@@ -136,16 +135,16 @@ export default function NewProjectModal({ onClose, onNewProject }: NewProjectMod
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your project..."
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
                 disabled={loading}
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <Button type="button" onClick={handleClose} variant="outline" disabled={loading}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
+              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

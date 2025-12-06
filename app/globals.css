@@ -11,3 +11,34 @@ body {
   @apply bg-background text-foreground transition-colors duration-300;
 }
 
+/* Custom scrollbar for mobile swiping */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) rgb(249 250 251);
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgb(249 250 251);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219);
+  border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}
+
+/* Touch-friendly scrolling for mobile */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}

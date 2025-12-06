@@ -55,9 +55,17 @@ export default async function AllBugsPage() {
 
     console.log("✅ Final bugs with projects:", bugs.length);
 
-    return <AllBugsClient initialBugs={bugs} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-purple-50">
+        <AllBugsClient initialBugs={bugs} />
+      </div>
+    );
   } catch (err) {
     console.error("💥 Unexpected error:", err);
-    return <AllBugsClient initialBugs={[]} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-purple-50">
+        <AllBugsClient initialBugs={[]} />
+      </div>
+    );
   }
 }

@@ -12,6 +12,8 @@ import {
   Download,
   Filter,
   TrendingUp,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import supabaseBrowser from "@/lib/supabaseBrowser";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,7 +36,9 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
   const supabase = supabaseBrowser;
   const { toast } = useToast();
 
-  const [bugs, setBugs] = useState<BugWithProject[]>(initialBugs);
+  const [bugs, setBugs] = useState<BugWithProject[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filteredBugs, setFilteredBugs] = useState<BugWithProject[]>(initialBugs);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterProject, setFilterProject] = useState("all");
@@ -43,17 +47,51 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
   const [filterResult, setFilterResult] = useState("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Get unique projects for filter
-  const projects = Array.from(
-    new Map(bugs.map((b) => [b.project?.id, b.project])).values()
-  ).filter(Boolean);
+  const ITEMS_PER_PAGE = 50;
+  const [loadedCount, setLoadedCount] = useState(ITEMS_PER_PAGE);
+
+  const loadMoreBugs = () => {
+    setLoadingMore(true);
+    // Increase the number of loaded items to show more bugs
+    setLoadedCount(loadedCount + ITEMS_PER_PAGE);
+    setHasMore(loadedCount + ITEMS_PER_PAGE < initialBugs.length);
+    setLoadingMore(false);
+  };
+
+  const [projects, setProjects] = useState<Array<{id: string; name: string; project_number: number | null}>>([]);
+
+  // Fetch all projects for dropdown
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabaseBrowser
+          .from("projects")
+          .select("id, name, project_number")
+          .order("name");
+
+        if (error) throw error;
+        setProjects(data ?? []);
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      }
+    };
+
+    if (projects.length === 0) fetchProjects();
+  }, [projects.length]);
+
+  useEffect(() => {
+    // Initialize with first batch of bugs
+    setBugs(initialBugs.slice(0, ITEMS_PER_PAGE));
+    setLoadedCount(ITEMS_PER_PAGE);
+    setHasMore(initialBugs.length > ITEMS_PER_PAGE);
+  }, [initialBugs]);
 
   useEffect(() => {
     filterBugs();
-  }, [bugs, searchQuery, filterProject, filterSeverity, filterStatus, filterResult]);
+  }, [initialBugs, loadedCount, searchQuery, filterProject, filterSeverity, filterStatus, filterResult]);
 
   const filterBugs = () => {
-    let result = [...bugs];
+    let result = [...initialBugs]; // Use ALL bugs for filtering, not just loaded ones
 
     if (searchQuery) {
     const q = searchQuery.toLowerCase().trim();
@@ -82,6 +120,11 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
       result = result.filter((b) => b.result === filterResult);
     }
 
+    // Only show the currently loaded page, but base filtering on ALL data
+    const startIndex = 0;
+    const endIndex = loadedCount;
+    result = result.slice(startIndex, endIndex);
+
     setFilteredBugs(result);
   };
 
@@ -91,76 +134,22 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
     return `SCB-${projectNum}-${bugNum}`;
   };
 
-  const getSeverityStyle = (severity?: string | null) => {
-  switch (severity) {
-    case "Crash/Undoable":
-      return `
-        bg-red-600/80 
-        text-red-900 
-        border-l-4 border-red-600 
-        hover:bg-red-300 
-        dark:bg-red-900/60 
-        dark:text-red-200 
-        dark:hover:bg-red-900/80 
-        dark:border-red-500
-      `;
-
-    case "High":
-      return `
-        bg-orange-500/80 
-        text-orange-900 
-        border-l-4 border-orange-600 
-        hover:bg-orange-300 
-        dark:bg-orange-900/60 
-        dark:text-orange-200 
-        dark:hover:bg-orange-900/80 
-        dark:border-orange-500
-      `;
-
-    case "Medium":
-      return `
-        bg-yellow-700/80 
-        text-yellow-900 
-        border-l-4 border-yellow-600 
-        hover:bg-yellow-300 
-        dark:bg-yellow-900/60 
-        dark:text-yellow-200 
-        dark:hover:bg-yellow-900/80 
-        dark:border-yellow-500
-      `;
-
-    case "Low":
-      return `
-        bg-green-500/80 
-        text-green-900 
-        border-l-4 border-green-600 
-        hover:bg-green-300 
-        dark:bg-green-900/60 
-        dark:text-green-200 
-        dark:hover:bg-green-900/80 
-        dark:border-green-500
-      `;
-
-    case "Suggestion":
-      return `
-        bg-blue-500/80 
-        text-blue-900 
-        border-l-4 border-blue-600 
-        hover:bg-blue-300 
-        dark:bg-blue-900/60 
-        dark:text-blue-200 
-        dark:hover:bg-blue-900/80 
-        dark:border-blue-500
-      `;
-
-    default:
-      return `
-        bg-card 
-        hover:bg-accent/50 
-        border-l-4 border-transparent
-      `;
+  function getSeverityStyle(severity?: string | null) {
+    switch (severity) {
+      case "Crash/Undoable":
+        return "bg-gradient-to-r from-red-500 to-rose-600 text-white border-red-300 hover:from-red-600 hover:to-rose-700";
+      case "High":
+        return "bg-gradient-to-r from-orange-400 to-amber-500 text-white border-orange-300 hover:from-orange-500 hover:to-amber-600";
+      case "Medium":
+        return "bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 border-yellow-300 hover:from-yellow-500 hover:to-amber-500";
+      case "Low":
+        return "bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-300 hover:from-green-500 hover:to-emerald-600";
+      case "Suggestion":
+        return "bg-gradient-to-r from-blue-400 to-indigo-500 text-white border-blue-300 hover:from-blue-500 hover:to-indigo-600";
+      default:
+        return "bg-white text-gray-900 border-gray-200 hover:bg-gray-50";
+    }
   }
-};
 
   const handleDeleteBug = async (bugId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -226,244 +215,211 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
 
   return (
     <ClientConnectionHandler>
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-        <div className="container-base py-6 space-y-6">
+        <div className="max-w-6xl mx-auto p-4 space-y-6">
 
-          {/* Header with gradient & animation */}
-          <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-900 dark:via-purple-900 dark:to-pink-900 rounded-2xl shadow-2xl p-8 md:p-10 text-white overflow-hidden group">
-            {/* Animated background pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 -left-4 w-72 h-72 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-float"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-overlay filter blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-            </div>
-
-            <div className="relative z-10 space-y-4">
-              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                <div className="space-y-3">
-                  <h1 className="font-hero text-white flex items-center gap-4 hero-shadow">
-                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm glow">
-                      <BugIcon className="w-10 h-10" />
-                    </div>
-                    All Bugs
-                  </h1>
-                  <p className="text-white/90 text-base md:text-lg font-medium">
-                    🔍 View and manage bugs from all projects
-                  </p>
+          {/* Colorful Header */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-lg shadow-xl p-8">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                    <BugIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-white drop-shadow-md">All Bugs</h1>
                 </div>
-
-                <Button
-                  onClick={handleExportCSV}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-2 border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  size="lg"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Export CSV
-                </Button>
+                <p className="text-white/90 font-medium text-lg">View and manage bugs from all projects</p>
               </div>
+              <Button
+                onClick={handleExportCSV}
+                className="bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
+          </div>
 
-              <div className="flex flex-wrap gap-3">
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/30 shadow-lg hover:bg-white/25 transition-all duration-300">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    <div>
-                      <span className="text-white/80 text-xs block">Total Bugs</span>
-                      <span className="font-bold text-xl">{bugs.length}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/30 shadow-lg hover:bg-white/25 transition-all duration-300">
-                  <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5" />
-                    <div>
-                      <span className="text-white/80 text-xs block">Showing</span>
-                      <span className="font-bold text-xl">{filteredBugs.length}</span>
-                    </div>
-                  </div>
-                </div>
+          {/* Colorful Stats Summary */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="relative overflow-hidden p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg shadow-lg">
+              <div className="absolute inset-0 bg-white/10"></div>
+              <div className="relative">
+                <div className="text-sm font-medium text-white/90 mb-1">Total Bugs</div>
+                <div className="text-3xl font-bold text-white">{initialBugs.length}</div>
+              </div>
+            </div>
+            <div className="relative overflow-hidden p-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-lg">
+              <div className="absolute inset-0 bg-white/10"></div>
+              <div className="relative">
+                <div className="text-sm font-medium text-white/90 mb-1">Showing</div>
+                <div className="text-3xl font-bold text-white">{filteredBugs.length}</div>
               </div>
             </div>
           </div>
 
-          {/* Search & Filters with glassmorphism */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 dark:border-gray-700 p-4 md:p-6 overflow-x-auto transition-colors duration-300">
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4 flex-wrap">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400 dark:text-indigo-300" />
+          {/* Search & Filters Card */}
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-6 shadow-md">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-bold text-gray-900">Search & Filters</h3>
+            </div>
+
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="🔎 Search bugs..."
+                  placeholder="Search bugs by ID, title, description..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 md:py-3 border border-indigo-200 dark:border-gray-600 rounded-lg bg-indigo-50/50 dark:bg-gray-700/30 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 dark:text-gray-200 placeholder:text-indigo-300 dark:placeholder:text-indigo-400 text-sm md:text-base transition-all"
+                  className="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                 />
               </div>
 
-              {/* Filters with hover effects */}
-              <div className="flex gap-3 flex-wrap flex-1">
-                {[
-                  {
-                    val: filterProject,
-                    fn: setFilterProject,
-                    label: "Project",
-                    options: [{ value: "all", label: "All Projects" }, ...projects.map(p => ({ value: p.id, label: p.name }))]
-                  },
-                  {
-                    val: filterSeverity,
-                    fn: setFilterSeverity,
-                    label: "Severity",
-                    options: [
-                      { value: "all", label: "All Severities" },
-                      { value: "Crash/Undoable", label: "💥 Crash/Undoable" },
-                      { value: "High", label: "🔥 High" },
-                      { value: "Medium", label: "🟡 Medium" },
-                      { value: "Low", label: "🟢 Low" },
-                      { value: "Suggestion", label: "💡 Suggestion" }
-                    ]
-                  },
-                  {
-                    val: filterStatus,
-                    fn: setFilterStatus,
-                    label: "Status",
-                    options: [
-                      { value: "all", label: "All Status" },
-                      { value: "New", label: "🎯 New" },
-                      { value: "Open", label: "📂 Open" },
-                      { value: "Blocked", label: "🚫 Blocked" },
-                      { value: "Fixed", label: "✅ Fixed" },
-                      { value: "To Fix in Update", label: "🧩 TFU" },
-                      { value: "Will Not Fix", label: "🚷 WNF" },
-                      { value: "In Progress", label: "⚙️ In Progress" }
-                    ]
-                  },
-                  {
-                    val: filterResult,
-                    fn: setFilterResult,
-                    label: "Result",
-                    options: [
-                      { value: "all", label: "All Results" },
-                      { value: "Confirmed", label: "✅ Confirmed" },
-                      { value: "Closed", label: "🔒 Closed" },
-                      { value: "Unresolved", label: "⚠️ Unresolved" },
-                      { value: "To-Do", label: "📝 To-Do" }
-                    ]
-                  }
-                ].map((f, i) => (
-                  <select
-                    key={i}
-                    value={f.val}
-                    onChange={e => f.fn(e.target.value)}
-                    className="table-select flex-1 min-w-[150px] px-3 py-2 md:py-3 border border-indigo-200 dark:border-gray-600 rounded-lg bg-indigo-50/50 dark:bg-gray-700/30 text-slate-700 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base"
-                  >
-                    {f.options.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                ))}
+              {/* Filter Dropdowns */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <select
+                  value={filterProject}
+                  onChange={e => setFilterProject(e.target.value)}
+                  className="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium"
+                >
+                  <option value="all">All Projects</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterSeverity}
+                  onChange={e => setFilterSeverity(e.target.value)}
+                  className="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium"
+                >
+                  <option value="all">All Severities</option>
+                  <option value="Crash/Undoable">🔴 Crash</option>
+                  <option value="High">🟠 High</option>
+                  <option value="Medium">🟡 Medium</option>
+                  <option value="Low">🟢 Low</option>
+                  <option value="Suggestion">🔵 Suggestion</option>
+                </select>
+
+                <select
+                  value={filterStatus}
+                  onChange={e => setFilterStatus(e.target.value)}
+                  className="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium"
+                >
+                  <option value="all">All Status</option>
+                  <option value="New">🎯 New</option>
+                  <option value="Open">📂 Open</option>
+                  <option value="Blocked">🚫 Blocked</option>
+                  <option value="Fixed">✅ Fixed</option>
+                  <option value="In Progress">⚙️ In Progress</option>
+                </select>
+
+                <select
+                  value={filterResult}
+                  onChange={e => setFilterResult(e.target.value)}
+                  className="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium"
+                >
+                  <option value="all">All Results</option>
+                  <option value="Confirmed">✅ Confirmed</option>
+                  <option value="To-Do">📝 To-Do</option>
+                </select>
               </div>
             </div>
           </div>
 
-          {/* Table with enhanced styling */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow border border-indigo-100 dark:border-gray-700 overflow-x-auto transition-colors duration-300">
+          {/* Bug Table */}
+          <div className="bg-white border-2 border-gray-200 rounded-lg shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
-          <table className="w-full text-sm md:text-base min-w-[700px]">
-               <thead className="bg-gradient-to-r from-indigo-100 via-indigo-50 to-white dark:from-gray-700 dark:via-gray-800 dark:to-gray-900 border-b border-indigo-200 dark:border-gray-600 backdrop-blur-md transition-colors duration-300">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                   <tr>
                     {["Bug ID", "Project", "Status", "Title", "Priority", "Result", "Created"].map(label => (
-                      <th key={label} className="px-6 py-4 text-left font-bold text-foreground uppercase text-xs tracking-wider">
+                      <th key={label} className="px-6 py-4 text-left text-sm font-bold text-gray-900">
                         {label}
                       </th>
                     ))}
                   </tr>
                 </thead>
-            <tbody className="divide-y divide-indigo-100 dark:divide-gray-700 transition-colors duration-300">
-                  {filteredBugs.length > 0 ? filteredBugs.map(bug => (
-                    <tr 
-                      key={bug.id} 
-                      onClick={() => router.push(`/bug/${bug.id}`)} 
-                      className={`cursor-pointer transition-all duration-200 ${getSeverityStyle(bug.severity)}`}
+                <tbody className="divide-y-2 divide-gray-100">
+                  {filteredBugs.length > 0 ? filteredBugs.map((bug, index) => (
+                    <tr
+                      key={bug.id}
+                      onClick={() => router.push(`/bug/${bug.id}`)}
+                      className={`cursor-pointer transition-all duration-300 hover:shadow-md ${getSeverityStyle(bug.severity)}`}
+                      style={{ animationDelay: `${index * 0.03}s` }}
                     >
-                    <td className="px-4 md:px-6 py-3 font-mono text-sm font-bold text-gray-900 dark:text-gray-100">
+                      <td className="px-6 py-4 font-mono text-xs font-bold">
                         {formatBugId(bug)}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-sm">
-                          {bug.project?.name || "Unknown"}
-                        </span>
+                      <td className="px-6 py-4 text-sm font-medium">
+                        {bug.project?.name || "Unknown"}
                       </td>
-                    <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900 dark:text-gray-100">
-                      {(() => {
-                        switch (bug.status) {
-                          case "New":
-                            return "🎯New";
-                          case "Open":
-                            return "📂Open";
-                          case "Blocked":
-                            return "🚫Blocked";
-                          case "Fixed":
-                            return "✅Fixed";
-                          case "To Fix in Update":
-                            return "🧩TFU";
-                          case "Will Not Fix":
-                            return "🚷WNF";
-                          case "In Progress":
-                            return "⚙️In Progress";
-                          default:
-                            return bug.status;
-                        }
-                      })()}
-                    </td>
-
+                      <td className="px-6 py-4 text-xs font-semibold">
+                        {(() => {
+                          switch (bug.status) {
+                            case "New": return "🎯 New";
+                            case "Open": return "📂 Open";
+                            case "Blocked": return "🚫 Blocked";
+                            case "Fixed": return "✅ Fixed";
+                            default: return bug.status;
+                          }
+                        })()}
+                      </td>
                       <td className="px-6 py-4 max-w-md">
-                        <p className="text-sm font-bold truncate mb-1">{bug.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{bug.description}</p>
+                        <p className="text-sm font-semibold truncate mb-1">
+                          {bug.title}
+                        </p>
+                        <p className="text-xs opacity-75 line-clamp-2">
+                          {bug.description}
+                        </p>
                       </td>
-                      <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900 dark:text-gray-100">
-                      {(() => {
-                        switch (bug.priority) {
-                          case "Highest":
-                            return "🚨 Dire";
-                          case "High":
-                            return "⚠️ High";
-                          case "Medium":
-                            return "🟠 Mid";
-                          case "Low":
-                            return "🟢 Low";
-                          default:
-                            return bug.priority;
-                        }
-                      })()}
-                    </td>
-                      <td className="px-4 md:px-6 py-3 text-xs font-semibold text-gray-900 dark:text-gray-100">
-                      {(() => {
-                        switch (bug.result) {
-                          case "Confirmed":
-                            return "✅ Confirmed";
-                          case "Closed":
-                            return "🔒 Closed";
-                          case "Unresolved":
-                            return "⚠️ Unresolved";
-                          case "To-Do":
-                          default:
-                            return "📝 To-Do";
-                        }
-                      })()}
-                    </td>
-                      <td className="px-6 py-4 text-xs text-muted-foreground font-medium">
-                        {bug.created_at ? new Date(bug.created_at).toLocaleDateString("id-ID") : "-"}
+                      <td className="px-6 py-4 text-xs font-semibold">
+                        {(() => {
+                          switch (bug.priority) {
+                            case "Highest": return "🚨 Dire";
+                            case "High": return "⚠️ High";
+                            case "Medium": return "🟠 Mid";
+                            case "Low": return "🟢 Low";
+                            default: return bug.priority;
+                          }
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-semibold">
+                        {(() => {
+                          switch (bug.result) {
+                            case "Confirmed": return "✅ Confirmed";
+                            case "Closed": return "🔒 Closed";
+                            case "Unresolved": return "⚠️ Unresolved";
+                            case "To-Do": default: return "📝 To-Do";
+                          }
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 text-xs opacity-75">
+                        {bug.created_at
+                          ? new Date(bug.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "-"}
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={7} className="px-4 py-20 text-center">
-                        <div className="flex flex-col items-center space-y-4">
-                          <div className="p-6 bg-muted rounded-full">
-                            <BugIcon className="w-20 h-20 text-muted-foreground opacity-50" />
+                      <td colSpan={7} className="px-6 py-16 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center mb-4">
+                            <BugIcon className="w-10 h-10 text-purple-600" />
                           </div>
-                          <div>
-                            <p className="text-xl font-bold text-foreground mb-2">No bugs found</p>
-                            <p className="text-sm text-muted-foreground">Try adjusting your filters or search query</p>
-                          </div>
+                          <p className="text-lg font-bold text-gray-900 mb-2">
+                            No bugs found
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Try adjusting your search or filters
+                          </p>
                         </div>
                       </td>
                     </tr>
@@ -473,8 +429,30 @@ export default function AllBugsClient({ initialBugs }: AllBugsClientProps) {
             </div>
           </div>
 
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center">
+              <Button
+                onClick={loadMoreBugs}
+                disabled={loadingMore}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all"
+                size="lg"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Loading more bugs...
+                  </>
+                ) : (
+                  <>
+                    Load More Bugs ({initialBugs.length - loadedCount} remaining)
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
         </div>
-      </div>
     </ClientConnectionHandler>
   );
 }

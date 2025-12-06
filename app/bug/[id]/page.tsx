@@ -103,11 +103,13 @@ export default async function BugDetailPage({ params }: BugDetailPageProps) {
     }
 
     return (
-      <BugDetailClient
-        bug={bug}
-        initialComments={comments}
-        projectId={bug.project_id ?? ""}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+        <BugDetailClient
+          bug={bug}
+          initialComments={comments}
+          projectId={bug.project_id ?? ""}
+        />
+      </div>
     );
   } catch (err: any) {
     console.error("❌ Unexpected error:", err);

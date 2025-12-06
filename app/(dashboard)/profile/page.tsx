@@ -24,14 +24,14 @@ export default async function ProfilePage() {
     .single();
 
   return (
-<div className="max-w-screen-xl mx-auto px-1 py-10">
-
-    <ProfileClient
-      profile={profile}
-      userId={user.id}
-      userEmail={user.email ?? ""}
-    />
-  </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <ProfileClient
+          profile={profile}
+          userId={user.id}
+          userEmail={user.email ?? ""}
+        />
+      </div>
+    </div>
   );
 }

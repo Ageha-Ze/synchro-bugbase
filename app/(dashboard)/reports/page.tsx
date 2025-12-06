@@ -17,13 +17,19 @@ export default async function ReportsPage() {
       .select("id, name, project_number");
 
     return (
-      <ReportsClient 
-        bugs={bugsData || []} 
-        projects={projectsData || []}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
+        <ReportsClient
+          bugs={bugsData || []}
+          projects={projectsData || []}
+        />
+      </div>
     );
   } catch (error) {
     console.error("Error fetching reports data:", error);
-    return <ReportsClient bugs={[]} projects={[]} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
+        <ReportsClient bugs={[]} projects={[]} />
+      </div>
+    );
   }
 }

@@ -14,12 +14,13 @@ import {
   Shield, 
   Calendar, 
   Clock, 
-  IdCard,
+
   Save,
   Loader2,
   Phone,
   FileText,
-  Camera
+  Camera,
+  Sparkles
 } from "lucide-react";
 
 interface Profile {
@@ -47,7 +48,6 @@ export default function ProfileClient({ profile, userId, userEmail }: ProfileCli
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
 
-  // ✅ Sync state dengan props saat profile berubah
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
@@ -87,89 +87,89 @@ export default function ProfileClient({ profile, userId, userEmail }: ProfileCli
       reader.readAsDataURL(file);
     }
   };
-const handleUpdateProfile = async (e: React.FormEvent) => {
-  e.preventDefault();
-  console.log("🔥 Function called!"); // ✅ Tambah ini
-  console.log("Data:", { fullName, bio, phone }); // ✅ Tambah ini
-  setLoading(true);
 
-  try {
-    let avatarUrl = profile?.avatar_url;
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-    if (avatarFile) {
-      console.log("📸 Uploading avatar..."); // ✅ Tambah ini
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, avatarFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
+    try {
+      let avatarUrl = profile?.avatar_url;
 
-      if (uploadError) {
-        console.error("❌ Upload error:", uploadError); // ✅ Tambah ini
-        throw uploadError;
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, avatarFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        avatarUrl = publicUrl;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          full_name: fullName,
+          bio: bio,
+          phone: phone,
+          avatar_url: avatarUrl
+        })
+        .eq("id", userId);
 
-      avatarUrl = publicUrl;
-      console.log("✅ Avatar uploaded:", avatarUrl); // ✅ Tambah ini
+      if (error) throw error;
+
+      toast.success("Profile updated successfully!", {
+        description: "Your changes have been saved."
+      });
+
+      setAvatarFile(null);
+
+    } catch (error: any) {
+      toast.error("Failed to update profile", {
+        description: error.message || "Please try again later."
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    console.log("💾 Updating profile..."); // ✅ Tambah ini
-    const { error } = await supabase
-      .from("profiles")
-      .update({ 
-        full_name: fullName,
-        bio: bio,
-        phone: phone,
-        avatar_url: avatarUrl
-      })
-      .eq("id", userId);
-
-    if (error) {
-      console.error("❌ Update error:", error); // ✅ Tambah ini
-      throw error;
-    }
-
-    console.log("✅ Profile updated successfully!"); // ✅ Tambah ini
-    toast.success("Profile updated successfully!", {
-      description: "Your changes have been saved."
-    });
-
-    setAvatarFile(null);
-
-  } catch (error: any) {
-    console.error("❌ Catch error:", error); // ✅ Tambah ini
-    toast.error("Failed to update profile", {
-      description: error.message || "Please try again later."
-    });
-  } finally {
-    setLoading(false);
-    console.log("🏁 Function completed"); // ✅ Tambah ini
-  }
-};
-  // Helper functions sama seperti sebelumnya...
   const getRoleBadge = (role: string | null | undefined) => {
-    const roleConfig: Record<string, { color: string; icon: string }> = {
-      QA: { color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800", icon: "🔍" },
-      Developer: { color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800", icon: "💻" },
-      Manager: { color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800", icon: "👔" },
+    const roleConfig: Record<string, { gradient: string; icon: string; shadow: string }> = {
+      QA: { 
+        gradient: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white", 
+        icon: "🔍",
+        shadow: "shadow-lg shadow-blue-500/30"
+      },
+      Developer: { 
+        gradient: "bg-gradient-to-r from-purple-500 to-pink-500 text-white", 
+        icon: "💻",
+        shadow: "shadow-lg shadow-purple-500/30"
+      },
+      Manager: { 
+        gradient: "bg-gradient-to-r from-green-500 to-emerald-500 text-white", 
+        icon: "👔",
+        shadow: "shadow-lg shadow-green-500/30"
+      },
     };
 
     const config = roleConfig[role || ""] || { 
-      color: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800", 
-      icon: "👤" 
+      gradient: "bg-gradient-to-r from-gray-500 to-slate-500 text-white", 
+      icon: "👤",
+      shadow: "shadow-lg shadow-gray-500/30"
     };
 
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border ${config.color}`}>
-        <span>{config.icon}</span>
+      <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-bold ${config.gradient} ${config.shadow} transform hover:scale-105 transition-all duration-200`}>
+        <span className="text-lg">{config.icon}</span>
         {role || "User"}
       </span>
     );
@@ -200,187 +200,271 @@ const handleUpdateProfile = async (e: React.FormEvent) => {
       .slice(0, 2);
   };
 
-return (
-  <ClientConnectionHandler>
-    <div className="min-h-screen bg-[#f6f8fa] dark:bg-[#0d1117] text-gray-900 dark:text-gray-100 transition-all">
-      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
+  return (
+    <ClientConnectionHandler>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-pink-900/20 text-gray-900 dark:text-gray-100 transition-all">
+        {/* Animated Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-400/30 to-pink-400/30 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-cyan-400/30 blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        </div>
 
-        {/* PROFILE HEADER – GitHub Style */}
-        <Card className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#0d1117]">
-          <CardContent className="p-8">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div className="relative max-w-5xl mx-auto p-4 md:p-8 space-y-8">
 
-              {/* AVATAR */}
-              <div className="relative">
-                <div className="rounded-full overflow-hidden border border-gray-300 dark:border-gray-700">
-                  {avatarPreview ? (
-                    <img
-                      src={avatarPreview}
-                      className="w-32 h-32 object-cover"
-                    />
-                  ) : (
-                    <div className="w-32 h-32 flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-4xl font-semibold">
-                      {getInitials(profile?.full_name)}
-                    </div>
-                  )}
-                </div>
-              </div>
+          {/* PROFILE HEADER – Colorful Gradient */}
+          <Card className="border-0 bg-white dark:bg-gray-800/50 shadow-2xl shadow-purple-500/20 backdrop-blur-sm overflow-hidden [&>*]:rounded-none rounded-none">
+            {/* Gradient Top Bar */}
+            <div className="h-32 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
+            
+            <CardContent className="p-8 -mt-16">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
-              {/* PROFILE INFO */}
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {profile?.full_name || "No Name Set"}
-                </h1>
-
-                <div className="mt-2 flex items-center text-gray-600 dark:text-gray-400">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {userEmail}
-                </div>
-
-                <div className="mt-4">
-                  {getRoleBadge(profile?.role)}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* LAYOUT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* MAIN FORM – GitHub Clean */}
-          <Card className="lg:col-span-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#0d1117]">
-            <CardHeader className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0d1117] rounded-t-xl">
-              <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                <User className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                Personal Information
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400">
-                Update your profile details
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-8 space-y-8">
-              <form onSubmit={handleUpdateProfile} className="space-y-8">
-
-                {/* AVATAR UPLOAD */}
-                <div className="space-y-3">
-                  <Label className="font-medium text-gray-700 dark:text-gray-300">
-                    Profile Picture
-                  </Label>
-
-                  <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500 text-xl">
-                          {getInitials(fullName)}
-                        </div>
-                      )}
-                    </div>
-
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="bg-white dark:bg-[#0d1117] border-gray-300 dark:border-gray-700 px-3 py-2 text-sm rounded-md"
-                    />
+                {/* AVATAR with Gradient Border */}
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+                  <div className="relative rounded-full overflow-hidden ring-4 ring-white dark:ring-gray-800 bg-white">
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        className="w-32 h-32 object-cover"
+                        alt="Profile"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white text-4xl font-bold">
+                        {getInitials(profile?.full_name)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* EMAIL */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700 dark:text-gray-300">Email</Label>
-                  <Input
-                    value={userEmail}
-                    disabled
-                    className="bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100"
-                  />
-                  <p className="text-xs text-gray-500">Email cannot be changed</p>
+                {/* PROFILE INFO */}
+                <div className="flex-1 text-center sm:text-left">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {profile?.full_name || "No Name Set"}
+                  </h1>
+
+                  <div className="mt-3 flex items-center justify-center sm:justify-start text-gray-600 dark:text-gray-300">
+                    <Mail className="w-5 h-5 mr-2 text-purple-500" />
+                    <span className="font-medium">{userEmail}</span>
+                  </div>
+
+                  <div className="mt-4">
+                    {getRoleBadge(profile?.role)}
+                  </div>
                 </div>
 
-                {/* ROLE */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700 dark:text-gray-300">Role</Label>
-                  <Input
-                    value={profile?.role || "User"}
-                    disabled
-                    className="bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
-                  />
-                </div>
-
-                {/* FULL NAME */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700 dark:text-gray-300">Full Name</Label>
-                  <Input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="bg-white dark:bg-[#0d1117] border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md"
-                  />
-                </div>
-
-                {/* PHONE */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700 dark:text-gray-300">Phone</Label>
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="bg-white dark:bg-[#0d1117] border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md"
-                  />
-                </div>
-
-                {/* BIO */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700 dark:text-gray-300">Bio</Label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    className="w-full bg-white dark:bg-[#0d1117] border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md"
-                    rows={4}
-                  />
-                </div>
-
-                {/* SAVE BUTTON */}
-                <Button type="submit" disabled={loading} className="w-full py-3 rounded-md bg-blue-600 hover:bg-blue-700">
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </form>
+                <Sparkles className="hidden sm:block w-8 h-8 text-yellow-400 animate-pulse" />
+              </div>
             </CardContent>
           </Card>
 
-          {/* RIGHT SIDEBAR – GitHub Style */}
-          <div className="space-y-6">
-            <Card className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#0d1117]">
-              <CardHeader className="border-b border-gray-200 dark:border-gray-800">
-                <CardTitle className="text-gray-900 dark:text-white">Account Details</CardTitle>
+          {/* LAYOUT GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            {/* MAIN FORM – Colorful */}
+            <Card className="lg:col-span-2 border-0 bg-white dark:bg-gray-800/50 shadow-xl backdrop-blur-sm rounded-none">
+              <CardHeader className="border-b border-purple-100 dark:border-purple-900/30 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-none">
+                <CardTitle className="flex items-center gap-3 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <User className="w-6 h-6 text-purple-600" />
+                  Personal Information
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-300">
+                  Update your profile details and make it shine! ✨
+                </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <p className="text-xs font-medium text-gray-600">User ID</p>
-                  <code className="block text-xs bg-gray-100 dark:bg-gray-900 p-3 rounded-md border border-gray-200 dark:border-gray-700">
-                    {userId}
-                  </code>
-                </div>
+              <CardContent className="p-8 space-y-6">
+                <div className="space-y-6">
 
-                <div>
-                  <p className="text-xs font-medium text-gray-600">Account Created</p>
-                  <p className="text-sm font-medium">{formatDate(profile?.created_at)}</p>
-                </div>
+                  {/* AVATAR UPLOAD with Gradient */}
+                  <div className="space-y-3">
+                    <Label className="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                      <Camera className="w-5 h-5 text-purple-500" />
+                      Profile Picture
+                    </Label>
 
-                {profile?.updated_at && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-600">Last Updated</p>
-                    <p className="text-sm font-medium">{formatDate(profile?.updated_at)}</p>
+                    <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-dashed border-purple-300 dark:border-purple-700">
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 blur opacity-50 group-hover:opacity-75 transition"></div>
+                        <div className="relative w-20 h-20 rounded-full overflow-hidden bg-white ring-2 ring-purple-500">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} className="w-full h-full object-cover" alt="Avatar preview" />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xl font-bold">
+                            {getInitials(fullName)}
+                          </div>
+                        )}
+                      </div>
+                      </div>
+
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-purple-700 focus:ring-2 focus:ring-purple-500 px-3 py-2 text-sm"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {/* EMAIL with Icon */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 dark:text-gray-200 font-semibold flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-500" />
+                      Email
+                    </Label>
+                    <Input
+                      value={userEmail}
+                      disabled
+                      className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800 text-gray-700 dark:text-gray-100"
+                    />
+                    <p className="text-xs text-gray-500">🔒 Email cannot be changed</p>
+                  </div>
+
+                  {/* ROLE with Icon */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 dark:text-gray-200 font-semibold flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-green-500" />
+                      Role
+                    </Label>
+                    <Input
+                      value={profile?.role || "User"}
+                      disabled
+                      className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 font-medium"
+                    />
+                  </div>
+
+                  {/* FULL NAME */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 dark:text-gray-200 font-semibold flex items-center gap-2">
+                      <User className="w-4 h-4 text-purple-500" />
+                      Full Name
+                    </Label>
+                    <Input
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="bg-white dark:bg-gray-900 border-purple-300 dark:border-purple-700 focus:ring-2 focus:ring-purple-500 px-4 py-2"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  {/* PHONE */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 dark:text-gray-200 font-semibold flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-orange-500" />
+                      Phone
+                    </Label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="bg-white dark:bg-gray-900 border-orange-300 dark:border-orange-700 focus:ring-2 focus:ring-orange-500 px-4 py-2"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+
+                  {/* BIO */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 dark:text-gray-200 font-semibold flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-pink-500" />
+                      Bio
+                    </Label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full bg-white dark:bg-gray-900 border-pink-300 dark:border-pink-700 focus:ring-2 focus:ring-pink-500 px-4 py-3 resize-none"
+                      rows={4}
+                      placeholder="Tell us about yourself..."
+                    />
+                  </div>
+
+                  {/* SAVE BUTTON with Gradient */}
+                  <Button 
+                    onClick={handleUpdateProfile} 
+                    disabled={loading} 
+                    className="w-full py-6 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 hover:from-purple-700 hover:via-pink-700 hover:to-orange-700 text-white font-bold text-lg shadow-xl shadow-purple-500/50 transform hover:scale-[1.02] transition-all duration-200"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Save className="w-5 h-5" />
+                        Save Changes
+                      </span>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+
+            {/* RIGHT SIDEBAR – Colorful Cards */}
+            <div className="space-y-6">
+              <Card className="border-0 bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl shadow-blue-500/30 rounded-none">
+                <CardHeader>
+                  <CardTitle className="text-white font-bold flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Account Details
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold text-blue-100 mb-2">User ID</p>
+                    <code className="block text-xs bg-white/20 backdrop-blur-sm p-3 border border-white/30 font-mono break-all">
+                      {userId}
+                    </code>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue-100">Account Created</p>
+                      <p className="text-sm font-bold">{formatDate(profile?.created_at)}</p>
+                    </div>
+                  </div>
+
+                  {profile?.updated_at && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <div>
+                        <p className="text-xs font-semibold text-blue-100">Last Updated</p>
+                        <p className="text-sm font-bold">{formatDate(profile?.updated_at)}</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Fun Stats Card */}
+              <Card className="border-0 bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-xl shadow-pink-500/30 rounded-none">
+                <CardHeader>
+                  <CardTitle className="text-white font-bold flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Profile Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Completeness</span>
+                      <span className="font-bold text-lg">
+                        {[fullName, bio, phone, avatarPreview].filter(Boolean).length * 25}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/20 h-3 overflow-hidden">
+                      <div 
+                        className="bg-white h-full transition-all duration-500"
+                        style={{width: `${[fullName, bio, phone, avatarPreview].filter(Boolean).length * 25}%`}}
+                      ></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </ClientConnectionHandler>
-);
+    </ClientConnectionHandler>
+  );
 }

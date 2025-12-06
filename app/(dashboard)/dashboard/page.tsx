@@ -1,12 +1,18 @@
-import BugTrendChart from "@/components/BugTrendChart";
-import QuickActions from "@/components/QuickActions";
-import { supabaseServer } from "@/lib/supabaseServer";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Bug as BugIcon, CheckCircle, Clock, TrendingUp } from "lucide-react";
+import { Bug as BugIcon, CheckCircle, Clock, TrendingUp, FolderKanban } from "lucide-react";
+import { supabaseServer } from "@/lib/supabaseServer";
 import type { Bug } from "@/lib/bugs";
 import ClientConnectionHandler from "@/components/ClientConnectionHandler";
+import QuickActions from "@/components/QuickActions";
 
-
+const BugTrendChart = dynamic(() => import("@/components/BugTrendChart"), {
+  loading: () => (
+    <div className="w-full h-64 flex items-center justify-center">
+      <div className="text-gray-500 dark:text-gray-400">Loading chart...</div>
+    </div>
+  ),
+});
 
 type Project = {
   id: string;
@@ -39,9 +45,8 @@ const supabase = await supabaseServer();
     supabase.from("projects").select("id, name, project_number")
   ]);
 
-  // ✅ Gunakan spread operator - otomatis include semua properties
   const mappedBugs: RecentBugWithProject[] = (bugsData || []).map((bug) => ({
-    ...bug, // ✅ Spread semua properties dari bug
+    ...bug,
     project: allProjects?.find((p) => p.id === bug.project_id) || null,
   })) as RecentBugWithProject[];
 
@@ -63,219 +68,238 @@ const supabase = await supabaseServer();
 
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
-      "Crash/Undoable": "from-red-400 to-red-500",
-      High: "from-orange-400 to-orange-500",
-      Medium: "from-yellow-300 to-yellow-400",
-      Low: "from-green-400 to-green-500",
-      Suggestion: "from-blue-400 to-blue-500",
+      "Crash/Undoable": "from-red-500 to-rose-600",
+      High: "from-orange-500 to-amber-600",
+      Medium: "from-yellow-400 to-amber-500",
+      Low: "from-green-500 to-emerald-600",
+      Suggestion: "from-blue-500 to-cyan-600",
     };
     return colors[severity] || "from-gray-400 to-gray-500";
   };
 
   const getSeverityBadge = (severity: string | null) => {
     const badges: Record<string, string> = {
-      "Crash/Undoable": "bg-red-100 text-red-700 border-red-200 dark:bg-red-900 dark:text-red-300 dark:border-red-700",
-      High: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700",
-      Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700",
-      Low: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700",
-      Suggestion: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
+      "Crash/Undoable": "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md",
+      High: "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md",
+      Medium: "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-md",
+      Low: "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md",
+      Suggestion: "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md",
     };
-    return badges[severity ?? ""] || "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+    return badges[severity ?? ""] || "bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md";
   };
 
   const getStatusBadge = (status: string | null) => {
     const badges: Record<string, string> = {
-      New: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-      Open: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      Blocked: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-      Confirmed: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      Closed: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
+      New: "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md",
+      Open: "bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-md",
+      Blocked: "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md",
+      Confirmed: "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md",
+      Closed: "bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md",
     };
-    return badges[status ?? ""] || "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300";
+    return badges[status ?? ""] || "bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md";
   };
 
   const getSeverityStyle = (severity?: string | null) => {
     switch (severity) {
       case "Crash/Undoable":
-        return "bg-red-700 text-white border-red-800 dark:bg-red-900 dark:text-white dark:border-red-700";
+        return "bg-gradient-to-br from-red-50 to-rose-100 border-2 border-red-300 hover:shadow-lg hover:border-red-400";
       case "High":
-        return "bg-orange-300 text-black border-orange-400 dark:bg-orange-800 dark:text-orange-200 dark:border-orange-700";
+        return "bg-gradient-to-br from-orange-50 to-amber-100 border-2 border-orange-300 hover:shadow-lg hover:border-orange-400";
       case "Medium":
-        return "bg-yellow-300 text-black border-yellow-400 dark:bg-yellow-800 dark:text-yellow-200 dark:border-yellow-700";
+        return "bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-300 hover:shadow-lg hover:border-yellow-400";
       case "Low":
-        return "bg-green-300 text-black border-green-400 dark:bg-green-800 dark:text-green-200 dark:border-green-700";
+        return "bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-300 hover:shadow-lg hover:border-green-400";
       case "Suggestion":
-        return "bg-sky-300 text-black border-sky-400 dark:bg-sky-800 dark:text-sky-200 dark:border-sky-700";
+        return "bg-gradient-to-br from-blue-50 to-cyan-100 border-2 border-blue-300 hover:shadow-lg hover:border-blue-400";
       default:
-        return "bg-white text-gray-900 border-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700";
+        return "bg-gradient-to-br from-gray-50 to-slate-100 border-2 border-gray-300 hover:shadow-lg hover:border-gray-400";
     }
   };
 
-  
-
   return (
-  <ClientConnectionHandler>
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-100 text-gray-800 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 dark:text-gray-100 transition-colors">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
+    <ClientConnectionHandler>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="max-w-6xl mx-auto p-3 sm:p-4 space-y-6 sm:space-y-8">
 
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-indigo-500 to-red-400 dark:from-indigo-700 dark:to-red-700 rounded-2xl shadow-md p-5 sm:p-8 text-white relative overflow-hidden">
-          {/* Hapus overlay blur untuk performa */}
-          <div className="relative z-10">
-            <h1 className="text-2xl sm:text-4xl font-bold">Dashboard</h1>
-            <p className="text-white/80 mt-1 text-sm sm:text-base">
-              Welcome back! Here's your bug tracking overview.
-            </p>
-
-            {/* Stat Cards */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              {[
-                ["Total Projects", stats.projects],
-                ["Total Bugs", stats.totalBugs],
-                ["Open Bugs", stats.openBugs],
-                ["Resolved", stats.resolved],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="bg-white/20 rounded-xl p-3 sm:p-4 text-center shadow-inner border border-white/30 hover:bg-white/30 dark:bg-black/30 dark:hover:bg-black/40 transition-colors"
-                >
-                  <p className="text-xs sm:text-sm text-white/90 font-medium">{label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold">{value}</p>
-                </div>
-              ))}
-            </div>
+          {/* Header */}
+          <div className="pb-3 sm:pb-4 border-b-4 border-gradient-to-r from-purple-400 via-pink-400 to-blue-400">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-indigo-600 mt-1 font-medium text-sm sm:text-base">Overview of your bug tracking activity</p>
           </div>
-        </div>
 
-        {/* Stats & Recent Bugs */}
-        <div className="space-y-6">
-
-          {/* Recent Bugs */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
-            <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
-                Recent Bugs
-              </h2>
-              <Link
-                href="/projects"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {[
+              { 
+                label: "Total Projects", 
+                value: stats.projects, 
+                icon: FolderKanban, 
+                gradient: "from-blue-500 to-cyan-600",
+                shadow: "shadow-blue-200"
+              },
+              { 
+                label: "Total Bugs", 
+                value: stats.totalBugs, 
+                icon: BugIcon, 
+                gradient: "from-purple-500 to-indigo-600",
+                shadow: "shadow-purple-200"
+              },
+              { 
+                label: "Open Bugs", 
+                value: stats.openBugs, 
+                icon: Clock, 
+                gradient: "from-orange-500 to-red-600",
+                shadow: "shadow-orange-200"
+              },
+              { 
+                label: "Resolved", 
+                value: stats.resolved, 
+                icon: CheckCircle, 
+                gradient: "from-green-500 to-emerald-600",
+                shadow: "shadow-green-200"
+              },
+            ].map(({ label, value, icon: Icon, gradient, shadow }) => (
+              <div 
+                key={label} 
+                className={`p-4 sm:p-6 bg-gradient-to-br ${gradient} border-2 border-white/50 hover:shadow-xl transition-all relative overflow-hidden group ${shadow}`}
               >
-                View All <TrendingUp className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {mappedBugs.length > 0 ? (
-                mappedBugs.map((bug) => {
-                  const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
-                  const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
-                  const bugId = `SCB-${projectNum}-${bugNum}`;
-
-                  return (
-                    <Link
-                      key={bug.id}
-                      href={`/bug/${bug.id}`}
-                      className={`block p-4 rounded-xl border hover:opacity-90 group ${getSeverityStyle(bug.severity)}`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-mono font-bold opacity-90">{bugId}</span>
-                            <span className="text-xs opacity-60">•</span>
-                            <span className="text-xs opacity-80 truncate">{bug.project?.name ?? "Unknown Project"}</span>
-                          </div>
-
-                          <h3 className="font-semibold truncate group-hover:underline">{bug.title}</h3>
-
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getSeverityBadge(bug.severity)}`}>
-                              {bug.severity ?? "Unknown"}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(bug.status)}`}>
-                              {bug.status ?? "Unknown"}
-                            </span>
-                          </div>
-
-                          <p className="text-xs mt-2 flex items-center gap-1 opacity-70">
-                            <Clock className="w-3 h-3" />
-                            {bug.created_at ? new Date(bug.created_at).toLocaleDateString("id-ID", {
-                              day: "numeric",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }) : "Unknown date"}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })
-              ) : (
-                <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                  <BugIcon className="w-14 h-14 mx-auto mb-3 opacity-40" />
-                  <p className="text-base font-medium">No bugs yet</p>
-                  <p className="text-xs">Create your first bug to get started</p>
+                <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-semibold text-white/90">{label}</p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2 text-white">{value}</p>
+                    </div>
+                    <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white/80" />
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            ))}
           </div>
 
-          {/* Severity Chart */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+
+            {/* Recent Bugs */}
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Recent Bugs
+                </h2>
+                <Link 
+                  href="/all-bugs" 
+                  className="text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-cyan-700 flex items-center gap-1"
+                >
+                  View all <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                </Link>
+              </div>
+
+              <div className="space-y-2 sm:space-y-3">
+                {mappedBugs.length > 0 ? (
+                  mappedBugs.map((bug) => {
+                    const projectNum = String(bug.project?.project_number ?? 1).padStart(2, "0");
+                    const bugNum = String(bug.bug_number ?? 0).padStart(3, "0");
+                    const bugId = `SCB-${projectNum}-${bugNum}`;
+
+                    return (
+                      <Link 
+                        key={bug.id} 
+                        href={`/bug/${bug.id}`} 
+                        className={`block p-3 sm:p-4 transition-all shadow-md hover:shadow-xl ${getSeverityStyle(bug.severity)}`}
+                      >
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 sm:mb-2 flex-wrap">
+                              <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-100 px-2 py-1">
+                                {bugId}
+                              </span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs font-semibold text-purple-600 truncate">
+                                {bug.project?.name ?? "Unknown"}
+                              </span>
+                            </div>
+                            <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 sm:mb-2">{bug.title}</h3>
+                            <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                              <span className={`px-2 py-1 text-xs font-bold ${getSeverityBadge(bug.severity)}`}>
+                                {bug.severity}
+                              </span>
+                              <span className={`px-2 py-1 text-xs font-bold ${getStatusBadge(bug.status)}`}>
+                                {bug.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 sm:py-12 bg-gradient-to-br from-gray-50 to-slate-100 border-2 border-gray-200">
+                    <BugIcon className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 text-gray-300" />
+                    <p className="text-sm text-gray-500 font-medium">No recent bugs</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bug Trend Chart */}
+            <div className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Bug Trend
+              </h2>
+              <div className="p-4 sm:p-6 border-2 border-indigo-200 bg-gradient-to-br from-white to-indigo-50 shadow-lg hover:shadow-xl transition-all">
+                <BugTrendChart />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Severity Overview */}
+          <div className="border-2 border-pink-200 p-4 sm:p-6 bg-white shadow-lg">
+            <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-4 sm:mb-6">
               Open Bugs by Severity
             </h2>
-
-            <div className="space-y-4">
+            <div className="grid gap-3 sm:gap-4">
               {Object.entries(severityCounts).length > 0 ? (
                 Object.entries(severityCounts)
                   .sort(([, a], [, b]) => (b as number) - (a as number))
                   .map(([severity, count]) => {
-                    const percentage =
-                      stats.totalBugs > 0 ? ((count as number) / stats.totalBugs * 100).toFixed(1) : "0";
+                    const percentage = stats.totalBugs > 0 ? ((count as number) / stats.totalBugs * 100).toFixed(1) : "0";
 
                     return (
-                      <div key={severity} className="pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{severity}</span>
-                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                            {count} ({percentage}%)
+                      <div 
+                        key={severity} 
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md transition-all"
+                      >
+                        <span className="text-sm font-bold text-gray-800 min-w-[100px]">{severity}</span>
+                        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                          <div className="flex-1 sm:w-32 bg-gray-200 h-3 relative overflow-hidden">
+                            <div
+                              className={`h-3 bg-gradient-to-r ${getSeverityColor(severity)} shadow-lg`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 min-w-[3rem] bg-white px-2 sm:px-3 py-1 border-2 border-gray-200 text-center">
+                            {count}
                           </span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                          <div
-                            className={`h-3 rounded-full bg-gradient-to-r ${getSeverityColor(severity)}`}
-                            style={{ width: `${percentage}%` }}
-                          ></div>
                         </div>
                       </div>
                     );
                   })
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <CheckCircle className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No open bugs 🎉</p>
+                <div className="text-center py-8 sm:py-12 bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-300">
+                  <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 text-green-500" />
+                  <p className="font-bold text-green-700">All bugs resolved! 🎉</p>
                 </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Bug Trend Chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 shadow-md overflow-hidden">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center gap-2">
-            <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-sky-400 rounded-full"></div>
-            Bug Trend (Last 30 Days)
-          </h2>
-          <BugTrendChart />
+          {/* Quick Actions */}
+          <QuickActions />
         </div>
-
-        {/* Quick Actions */}
-        <QuickActions />
       </div>
-    </div>
-  </ClientConnectionHandler>
-);
+    </ClientConnectionHandler>
+  );
 }
